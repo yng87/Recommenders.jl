@@ -1,0 +1,13 @@
+name = "Recommender"
+uuid = "f1dcbcfb-0b1d-45c0-883e-2edcfc1d4c23"
+authors = ["yng87 <k.yanagi07@gmail.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
