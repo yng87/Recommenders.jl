@@ -1,19 +1,56 @@
-using HTTP, ZipFile
+global __datasets = nothing
 
-abstract type Dataset end
+function datasets()
+    if __datasets === nothing
+        path = joinpath(@__DIR__, "..", "dataset", "datasets.csv")
+        global __datasets = DataFrame(CSV.File(path))
+    end
+    return __datasets::DataFrame
+end
 
-function download(dataset::Dataset)
+function datasets(name::AbstractString)
+    df = datasets()
+    return df[findall(isequal(name), df[:, :name]), :]
+end
+
+function dataset(name::AbstractString)
+    df = datasets(name)
+    if isempty(df)
+        error("$name not exist in our dataset list.")
+    end
+    # get only first element
+    name = df[1, :name]
+    format = df[1, :format]
+    url = df[1, :url]
+
+    return Dataset(name, format, url)
+end
+
+# dataset struct
+
+abstract type AbstractDataset end
+
+function download(dataset::AbstractDataset)
     error("download method is not implemented.")
 end
 
-struct ZipDataset <: Dataset
-    dirname::AbstractString
+struct Dataset <: AbstractDataset
+    name::AbstractString
+    format::AbstractString
     url::AbstractString
+    dirpath::AbstractString
 end
 
-function download(dataset::ZipDataset; usecache=true, unzip=true, removezip=false)
-    dirpath = joinpath(@__DIR__, "..", "cache", "dataset", dataset.dirname)
+Dataset(name, format, url) = Dataset(name, format, url, joinpath(@__DIR__, "..", "dataset", name))
 
+function download(dataset::Dataset; kwargs...)
+    if dataset.format == "zip"
+        download_zip(dataset.url, dataset.name, dataset.dirpath; kwargs...)
+        return
+    end
+end
+
+function download_zip(url::AbstractString, name::AbstractString, dirpath::String; usecache=true, unzip=true, removezip=false)
     if usecache && isdir(dirpath)
         return
     end
@@ -23,9 +60,17 @@ function download(dataset::ZipDataset; usecache=true, unzip=true, removezip=fals
 
     # download zip
     mkdir(dirpath)
-    zippath = joinpath(dirpath, "$(dataset.dirname).zip")
-    io = open(zippath, "w")
-    HTTP.request("GET", dataset.url, response_stream=io)
+    zippath = joinpath(dirpath, "$(name).zip")
+    
+    try
+        io = open(zippath, "w")
+        HTTP.request("GET", url, response_stream=io)
+    catch e
+        isfile(zippath)
+        rm(zippath)
+        throw(e)
+    end
+   
 
     # unzip
     if unzip
@@ -46,7 +91,3 @@ function download(dataset::ZipDataset; usecache=true, unzip=true, removezip=fals
         rm(zippath)
     end
 end
-
-# TODO: move info to csv file or so.
-ml_1m = ZipDataset("ml-1m", "http://files.grouplens.org/datasets/movielens/ml-1m.zip")
-download(ml_1m, usecache=false)
