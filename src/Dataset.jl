@@ -94,8 +94,9 @@ function download_zip(url::AbstractString, name::AbstractString, dirpath::String
         io = open(zippath, "w")
         HTTP.request("GET", url, response_stream=io)
     catch e
-        isfile(zippath)
-        rm(zippath)
+        if isfile(zippath)
+          rm(zippath)
+        end
         throw(e)
     end
    
@@ -103,15 +104,18 @@ function download_zip(url::AbstractString, name::AbstractString, dirpath::String
     # unzip
     if unzip
         r = ZipFile.Reader(zippath)
-        for f in r.files
-            if f.name[end]=='/'
-                continue
+        try
+            for f in r.files
+                if f.name[end]=='/'
+                    continue
+                end
+                println("Extracting $(f.name)")
+                io = open(joinpath(dirpath, basename(f.name)), "w")
+                write(io, read(f, String))
             end
-            println("Filename: $(f.name)")
-            io = open(joinpath(dirpath, basename(f.name)), "w")
-            write(io, read(f, String))
+        finally
+            close(r)
         end
-        close(r)
     end
 
     # remove zip
