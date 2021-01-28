@@ -1,4 +1,6 @@
 # Recommender
+[WIP]
+I will collect datasets and algorithms for recommender systems...
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommender.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommender.jl/dev)
@@ -8,4 +10,5 @@
 ```julia
 d = dataset("movielens1m")
 download(d, usecache=false, removezip=true, unzip=true)
+rating, user, movie = load(d)
 ```

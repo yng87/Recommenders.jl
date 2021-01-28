@@ -1,6 +1,6 @@
 module Recommender
 
-export download, dataset
+export download, dataset, load
 
 using HTTP, ZipFile, DataFrames, CSV
 import Base: download

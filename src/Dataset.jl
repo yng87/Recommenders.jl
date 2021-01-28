@@ -34,6 +34,10 @@ function download(dataset::AbstractDataset)
     error("download method is not implemented.")
 end
 
+function load(dataset::AbstractDataset)
+    error("load method is not implemented.")
+end
+
 struct Dataset <: AbstractDataset
     name::AbstractString
     format::AbstractString
@@ -42,6 +46,27 @@ struct Dataset <: AbstractDataset
 end
 
 Dataset(name, format, url) = Dataset(name, format, url, joinpath(@__DIR__, "..", "dataset", name))
+
+function load(dataset::Dataset; kwargs...)
+    if dataset.name == "movielens1m"
+        return load_movielens1m(dataset.dirpath)
+    end
+end
+
+function loadcsv(path::AbstractString; delim=",", header=0, columns=nothing)
+    df = DataFrame(CSV.File(path, delim=delim, header=header))
+    return rename!(df, columns)
+end
+
+function load_movielens1m(dirpath::AbstractString)
+    rating = loadcsv(joinpath(dirpath, "ratings.dat"), delim="::", header=0,
+        columns=[:userid, :movieid, :rating, :timestamp])
+    user = loadcsv(joinpath(dirpath, "users.dat"), delim="::", header=0,
+        columns=[:userid, :gender, :age, :occupation, :zipcode])
+    movie = loadcsv(joinpath(dirpath, "movies.dat"), delim="::", header=0,
+        columns=[:movieid, :title, :genres])
+    return rating, user, movie
+end
 
 function download(dataset::Dataset; kwargs...)
     if dataset.format == "zip"
