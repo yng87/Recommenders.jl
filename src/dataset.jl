@@ -1,7 +1,19 @@
 global __datasets = nothing
 
+"""
+
+    AbstractDataset
+
+Abstract base struct for dataset objects
+"""
 abstract type AbstractDataset end
 
+"""
+
+    Dataset
+
+Dataset for manage dataset
+"""
 struct Dataset <: AbstractDataset
     name::AbstractString
     format::AbstractString
@@ -11,6 +23,12 @@ end
 
 Dataset(name, format, url) = Dataset(name, format, url, joinpath(@__DIR__, "..", "dataset", name))
 
+"""
+
+    datasets
+
+Return all dataset information from datasets.csv
+"""
 function datasets()
     if __datasets === nothing
         path = joinpath(@__DIR__, "..", "dataset", "datasets.csv")
@@ -19,11 +37,18 @@ function datasets()
     return __datasets::DataFrame
 end
 
+
 function datasets(name::AbstractString)
     df = datasets()
     return df[findall(isequal(name), df[:, :name]), :]
 end
 
+"""
+
+    datasets
+
+Return dataset specifiend by name by DataFrame.
+"""
 function dataset(name::AbstractString)
     df = datasets(name)
     if isempty(df)
