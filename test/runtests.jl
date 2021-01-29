@@ -1,6 +1,10 @@
 using Recommender
 using Test
 
-@testset "Recommender.jl" begin
-    # Write your tests here.
+const tests = ["load_movielens1m.jl"]
+
+for t in tests
+    @testset "Test $t" begin
+        include(t)
+    end
 end
