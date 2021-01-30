@@ -1,3 +1,13 @@
+"""
+    download_zip(url::AbstractString, name::AbstractString, dirpath::String; <keyword arguments>)
+
+Download zipped dataset `name` from `url`, and place it to `dirpath`.
+
+# Keyword arguments
+- `usecache=true`: if `true` and `dirpath` already exists, it skips download. If `false`, it force download by removing `dirpath` (if exists).
+- `unzip=true`: whether extract datasets from zip.
+- `removezip=false`: whether remove original zip after extraction.
+"""
 function download_zip(url::AbstractString, name::AbstractString, dirpath::String; usecache=true, unzip=true, removezip=false)
     if usecache && isdir(dirpath)
         return
