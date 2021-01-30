@@ -212,7 +212,7 @@ uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[Recommender]]
 deps = ["CSV", "DataFrames", "HTTP", "ZipFile"]
-path = "/Users/keisuke.yanagi/workspace/Recommender.jl"
+path = ".."
 uuid = "f1dcbcfb-0b1d-45c0-883e-2edcfc1d4c23"
 version = "0.1.0"
 
