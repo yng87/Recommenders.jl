@@ -1,3 +1,9 @@
+"""
+    ItemkNN(k, shrink, weighting)
+
+ItemkNN Recommender. Currently supports weighting only by TF-IDF.
+Assume table inputs with column name (:userid, :itemid, :target).
+"""
 @with_kw_noshow mutable struct ItemkNN <: MLJBase.Unsupervised
     k::Int = 10
     shrink::Float64 = 0
@@ -5,10 +11,10 @@
 end
 
 function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
-    raw = unpack(X, in((:userid, :itemid, :target)),
+    raw, = unpack(X, in((:userid, :itemid, :target));
         :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
-    user2uidx = Dict(uid=>i for (i, uid) in enumerate(unique(raw[:, :userid])))
-    item2iidx = Dict(iid=>i for (i, iid) in enumerate(unique(raw[:, :itemid])))
+    user2uidx = Dict(uid=>i for (i, uid) in enumerate(unique(raw.userid)))
+    item2iidx = Dict(iid=>i for (i, iid) in enumerate(unique(raw.itemid)))
 
     Xsparse = transform2sparse(raw, user2uidx, item2iidx)
     if model.weighting == :tfidf
@@ -23,25 +29,42 @@ function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
 end
 
 function MLJBase.predict(model::ItemkNN, fitresult, Xnew)
-    X = unpack(Xnew, in((:userid, :itemid, :target))
+    X, = unpack(Xnew, in((:userid, :itemid, :target));
         :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
     sparse_similarity_matrix, user2uidx, item2iidx = fitresult
-    iidx2item = Dict(i=>iid for (iid, i) in item2iidx)
+
+    # add cold user ids. ItemkNN can handle them.
+    userids = unique(X.userid)
+    max_uidx = max(values(user2uidx)...)
+    for uid in userids
+        if !(uid in keys(user2uidx))
+            max_uidx += 1
+            user2uidx[uid] = max_uidx
+        end
+    end
+
+    # remove cold items because it does not exist in sim. mat.
+    itemids = keys(item2iidx)
+    X = X |>  TableOperations.filter(x->Tables.getcolumn(x, :itemid) in itemids) |> Tables.columntable
+
     Xsparse = transform2sparse(X, user2uidx, item2iidx)
 
-    userids = unique(X[:, :userid])
+    iidx2item = Dict(i=>iid for (iid, i) in item2iidx)
+
     preds = []
     for uid in userids
         uidx = user2uidx[uid]
         pred = sortperm((Xsparse[uidx, :]' * sparse_similarity_matrix)', rev=true)
 
+        # filter out already consumed items.
         I, R = findnz(Xsparse[uidx, :])
         filter!(p->!(p in I), pred)
 
         pred = [iidx2item[i] for i in pred]
 
-        append!(preds, [uid, pred])
+        append!(preds, [pred])
     end
+    return DataFrame(:userid=>userids, :preds=>preds)
 end
 
 function transform2sparse(X, user2uidx, item2iidx)

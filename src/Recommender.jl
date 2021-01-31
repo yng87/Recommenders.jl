@@ -1,8 +1,8 @@
 module Recommender
 
-export download, dataset, load
+export download, dataset, load, ItemkNN
 
-using HTTP, ZipFile, DataFrames, CSV, SparseArrays, MLJ, MLJBase, Parameters
+using HTTP, ZipFile, DataFrames, CSV, SparseArrays, MLJ, MLJBase, Parameters, Tables, TableOperations
 import Base: download
 
 include("downloadutils.jl")
