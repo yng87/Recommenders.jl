@@ -1,5 +1,5 @@
 using Test, DataFrames, SparseArrays, MLJ, Tables
-using Recommender: transform2sparse, tfidf, compute_similarity_matrix, ItemkNN
+using Recommender: transform2sparse, tfidf, compute_similarity_matrix, ItemkNN, predict_i2i, predict_u2i
 
 X = DataFrame(:userid=>[10, 10, 10, 30], :itemid=>[400, 500, 600, 600], :target=>[1, 3, 5, 2])
 user2uidx = Dict(10=>1, 30=>2)
@@ -38,7 +38,7 @@ expected_fitresult = (
 
 Xnew = DataFrame(:userid=>[10, 30, 10, 50], :itemid=>[400, 500, 600, 400], :target=>[1, 2, 2, 1])
 expected_preds = DataFrame(:userid=>[10, 30, 50], :preds=>[[500], [400], [500]])
-@test predict(knn, Xnew) == expected_preds
+@test predict_u2i(knn, Xnew) == expected_preds
 
 # test MLJ by Tables.columntable format
 X = X |>  Tables.columntable
@@ -52,4 +52,4 @@ fit!(knn)
 @test knn.report === nothing
 
 Xnew = Xnew |> Tables.columntable
-@test predict(knn, Xnew) == expected_preds
+@test predict_u2i(knn, Xnew) == expected_preds

@@ -28,7 +28,15 @@ function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
     return fitresult, cache, report
 end
 
-function MLJBase.predict(model::ItemkNN, fitresult, Xnew)
+# function predict_i2i(model::ItemkNN, fitresult, Xnew)
+#     # assume Xnew = Vector[itemids]
+#     xs = MLJBase.matrix(Xnew)[:, 1]
+#     sparse_similarity_matrix, _, item2iidx = fitresult
+#     iids = [item2iidx[itemid] for itemid in xs]
+#     return sparse_similarity_matrix[:, iids]
+# end
+
+function predict_u2i(model::ItemkNN, fitresult, Xnew)
     X, = unpack(Xnew, in((:userid, :itemid, :target));
         :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
     sparse_similarity_matrix, user2uidx, item2iidx = fitresult
