@@ -15,6 +15,7 @@ function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
         :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
     user2uidx = Dict(uid=>i for (i, uid) in enumerate(unique(raw.userid)))
     item2iidx = Dict(iid=>i for (i, iid) in enumerate(unique(raw.itemid)))
+    iidx2item = Dict(i=>iid for (iid, i) in item2iidx)
 
     Xsparse = transform2sparse(raw, user2uidx, item2iidx)
     if model.weighting == :tfidf
@@ -22,24 +23,51 @@ function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
     end
     sparse_similarity_matrix = compute_similarity_matrix(Xsparse, model.k, model.shrink)
 
-    fitresult = (sparse_similarity_matrix, user2uidx, item2iidx)
+    fitresult = (sparse_similarity_matrix, user2uidx, item2iidx, iidx2item)
     report    = nothing
     cache     = nothing
     return fitresult, cache, report
 end
 
-# function predict_i2i(model::ItemkNN, fitresult, Xnew)
-#     # assume Xnew = Vector[itemids]
-#     xs = MLJBase.matrix(Xnew)[:, 1]
-#     sparse_similarity_matrix, _, item2iidx = fitresult
-#     iids = [item2iidx[itemid] for itemid in xs]
-#     return sparse_similarity_matrix[:, iids]
-# end
+reformat(model::ItemkNN, Xraw) = (Xraw,)
 
+"""
+    predict_i2i(model::ItemkNN, fitresult, itemids)
+
+Return top k prediction to each query item in `itemids`.
+`itemids` is Tables.jl-compatible object,
+which originally was itemid vector.
+"""
+function predict_i2i(model::ItemkNN, fitresult, Xnew)
+    itemids = Xnew.itemid
+    sparse_similarity_matrix, _, item2iidx, iidx2item = fitresult
+
+    preds = []
+    for itemid in itemids
+        if itemid in keys(item2iidx)
+            I, _ = findnz(sparse_similarity_matrix[:, item2iidx[itemid]])
+            pred = [iidx2item[i] for i in I]
+        else
+            # TODO: should we raise error?
+            pred = nothing
+        end
+        append!(preds, [pred])
+    end
+    return DataFrame(:itemid=>itemids, :preds=>preds)
+end
+
+"""
+    predict_u2i(model::ItemkNN, fitresult, Xnew)
+
+Return top k prediction to each user in `Xnew`,
+which also entails user history of item consumption.
+`Xnew` is Tables.jl-compatible object whose columns 
+consists of (:userid, :itemid, :target).
+"""
 function predict_u2i(model::ItemkNN, fitresult, Xnew)
     X, = unpack(Xnew, in((:userid, :itemid, :target));
         :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
-    sparse_similarity_matrix, user2uidx, item2iidx = fitresult
+    sparse_similarity_matrix, user2uidx, item2iidx, iidx2item = fitresult
 
     # add cold user ids. ItemkNN can handle them.
     userids = unique(X.userid)
@@ -54,10 +82,9 @@ function predict_u2i(model::ItemkNN, fitresult, Xnew)
     # remove cold items because it does not exist in sim. mat.
     itemids = keys(item2iidx)
     X = X |>  TableOperations.filter(x->Tables.getcolumn(x, :itemid) in itemids) |> Tables.columntable
+    # TODO: what happens if some user ids are lost by this filter?
 
     Xsparse = transform2sparse(X, user2uidx, item2iidx)
-
-    iidx2item = Dict(i=>iid for (iid, i) in item2iidx)
 
     preds = []
     for uid in userids

@@ -37,8 +37,10 @@ expected_fitresult = (
 @test knn.report === nothing
 
 Xnew = DataFrame(:userid=>[10, 30, 10, 50], :itemid=>[400, 500, 600, 400], :target=>[1, 2, 2, 1])
-expected_preds = DataFrame(:userid=>[10, 30, 50], :preds=>[[500], [400], [500]])
-@test predict_u2i(knn, Xnew) == expected_preds
+expected_preds_u2i = DataFrame(:userid=>[10, 30, 50], :preds=>[[500], [400], [500]])
+expected_preds_i2i = DataFrame(:itemid=>[400, 500, 600, 400], :preds=>[[500], [400], nothing, [500]])
+@test predict_u2i(knn, Xnew) == expected_preds_u2i
+@test predict_i2i(knn, Xnew) == expected_preds_i2i
 
 # test MLJ by Tables.columntable format
 X = X |>  Tables.columntable
@@ -52,4 +54,5 @@ fit!(knn)
 @test knn.report === nothing
 
 Xnew = Xnew |> Tables.columntable
-@test predict_u2i(knn, Xnew) == expected_preds
+@test predict_u2i(knn, Xnew) == expected_preds_u2i
+@test predict_i2i(knn, Xnew) == expected_preds_i2i
