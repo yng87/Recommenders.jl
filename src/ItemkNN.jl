@@ -13,17 +13,16 @@ end
 function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
     raw, = unpack(X, in((:userid, :itemid, :target));
         :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
-    user2uidx = Dict(uid=>i for (i, uid) in enumerate(unique(raw.userid)))
-    item2iidx = Dict(iid=>i for (i, iid) in enumerate(unique(raw.itemid)))
+    
+    Xsparse, user2uidx, item2iidx = transform2sparse(raw)
     iidx2item = Dict(i=>iid for (iid, i) in item2iidx)
 
-    Xsparse = transform2sparse(raw, user2uidx, item2iidx)
     if model.weighting == :tfidf
         Xsparse = tfidf(Xsparse)
     end
-    sparse_similarity_matrix = compute_similarity_matrix(Xsparse, model.k, model.shrink)
+    similarity = compute_similarity(Xsparse, model.k, model.shrink)
 
-    fitresult = (sparse_similarity_matrix, user2uidx, item2iidx, iidx2item)
+    fitresult = (similarity, user2uidx, item2iidx, iidx2item)
     report    = nothing
     cache     = nothing
     return fitresult, cache, report
@@ -40,12 +39,12 @@ which originally was itemid vector.
 """
 function predict_i2i(model::ItemkNN, fitresult, Xnew)
     itemids = Xnew.itemid
-    sparse_similarity_matrix, _, item2iidx, iidx2item = fitresult
+    similarity, _, item2iidx, iidx2item = fitresult
 
     preds = []
     for itemid in itemids
         if itemid in keys(item2iidx)
-            I, _ = findnz(sparse_similarity_matrix[:, item2iidx[itemid]])
+            I, _ = findnz(similarity[:, item2iidx[itemid]])
             pred = [iidx2item[i] for i in I]
         else
             # TODO: should we raise error?
@@ -67,29 +66,21 @@ consists of (:userid, :itemid, :target).
 function predict_u2i(model::ItemkNN, fitresult, Xnew)
     X, = unpack(Xnew, in((:userid, :itemid, :target));
         :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
-    sparse_similarity_matrix, user2uidx, item2iidx, iidx2item = fitresult
+    similarity, _, item2iidx, iidx2item = fitresult
 
-    # add cold user ids. ItemkNN can handle them.
     userids = unique(X.userid)
-    max_uidx = max(values(user2uidx)...)
-    for uid in userids
-        if !(uid in keys(user2uidx))
-            max_uidx += 1
-            user2uidx[uid] = max_uidx
-        end
-    end
 
     # remove cold items because it does not exist in sim. mat.
     itemids = keys(item2iidx)
     X = X |>  TableOperations.filter(x->Tables.getcolumn(x, :itemid) in itemids) |> Tables.columntable
     # TODO: what happens if some user ids are lost by this filter?
 
-    Xsparse = transform2sparse(X, user2uidx, item2iidx)
+    Xsparse, user2uidx, _ = transform2sparse(X)
 
     preds = []
     for uid in userids
         uidx = user2uidx[uid]
-        pred = sortperm((Xsparse[uidx, :]' * sparse_similarity_matrix)', rev=true)
+        pred = sortperm((Xsparse[uidx, :]' * similarity)', rev=true)
 
         # filter out already consumed items.
         I, R = findnz(Xsparse[uidx, :])
@@ -102,7 +93,10 @@ function predict_u2i(model::ItemkNN, fitresult, Xnew)
     return DataFrame(:userid=>userids, :preds=>preds)
 end
 
-function transform2sparse(X, user2uidx, item2iidx)
+function transform2sparse(X)
+    user2uidx = Dict(uid=>i for (i, uid) in enumerate(unique(X.userid)))
+    item2iidx = Dict(iid=>i for (i, iid) in enumerate(unique(X.itemid)))
+
     U = Int[]
     I = Int[]
     R = Float64[]
@@ -118,7 +112,7 @@ function transform2sparse(X, user2uidx, item2iidx)
         push!(R, t)
     end 
     
-    return sparse(U, I, R)
+    return sparse(U, I, R), user2uidx, item2iidx
 end
 
 function tfidf(X::SparseMatrixCSC)
@@ -139,7 +133,7 @@ function tfidf(X::SparseMatrixCSC)
     return sparse(U, I, R)
 end
 
-function compute_similarity_matrix(X::SparseMatrixCSC, topK::Int, shrink::Float64)
+function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64)
     # (user, item)^T * (user, item) -> (item, item)
     # Return S[i, j] where j is full items, and i is related items at topK
     
