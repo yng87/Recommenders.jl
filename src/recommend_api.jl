@@ -1,11 +1,11 @@
-const OPERATIONS = (:predict_i2i, :predict_u2i)
+const OPERATIONS = (:retrieve, :ranksort)
 
-function predict_i2i(m::MLJBase.Model, fitresult, itemids; kwargs...)
-    error("predict_i2i is not not implemented for recommender type $(typeof(m))")
+function retrieve(m::MLJBase.Model, fitresult, itemids; kwargs...)
+    error("retrieve is not not implemented for recommender type $(typeof(m))")
 end
 
-function predict_u2i(m::MLJBase.Model, fitresult, userids; kwargs...)
-    error("predict_u2i is not not implemented for recommender type $(typeof(m))")
+function ranksort(m::MLJBase.Model, fitresult, userids; kwargs...)
+    error("ranksort not not implemented for recommender type $(typeof(m))")
 end
 
 for operation in OPERATIONS

@@ -1,5 +1,5 @@
 using Test, DataFrames, SparseArrays, MLJ, Tables
-using Recommender: transform2sparse, tfidf, compute_similarity, ItemkNN, predict_i2i, predict_u2i
+using Recommender: transform2sparse, tfidf, compute_similarity, ItemkNN, retrieve
 
 X = DataFrame(:userid=>[10, 10, 10, 30], :itemid=>[400, 500, 600, 600], :target=>[1, 3, 5, 2])
 Xsparse, user2uidx, item2iidx = transform2sparse(X)
@@ -22,38 +22,42 @@ evaluated = compute_similarity(X, 1, 0.)
 @test evaluated ≈ expected
 
 # test MLJ integration
-X = DataFrame(:userid=>[10, 10, 30, 30], :itemid=>[400, 500, 400, 500], :target=>[1, 2, 2, 1])
+X = DataFrame(:userid=>[10, 30, 30], :itemid=>[400, 400, 500], :target=>[1, 2, 1])
 model = ItemkNN(k=1)
 knn = machine(model, X)
 fit!(knn)
 expected_fitresult = (
-    expected,
+    sparse([2, 1], [1, 2],
+            [1*2*(log(2/(2+1e-6)) + 1)^2 / (1 * sqrt(5) + 1e-6),
+            1*2*(log(2/(2+1e-6)) + 1)^2 / (1 * sqrt(5) + 1e-6)]),
+    sparse([1, 2, 2], [1, 1, 2], [1, 2, 1]),
     Dict(10=>1, 30=>2),
-    Dict(400=>1, 500=>2)
+    Dict(400=>1, 500=>2),
+    Dict(1=>400, 2=>500)
 )
-@test knn.fitresult[1] ≈ expected_fitresult[1]
+@test knn.fitresult[1] ≈ expected_fitresult[1] atol=1e-3
 @test knn.fitresult[2] == expected_fitresult[2]
 @test knn.fitresult[3] == expected_fitresult[3]
+@test knn.fitresult[4] == expected_fitresult[4]
+@test knn.fitresult[5] == expected_fitresult[5]
 @test knn.cache === nothing
 @test knn.report === nothing
 
-Xnew = DataFrame(:userid=>[10, 30, 10, 50], :itemid=>[400, 500, 600, 400], :target=>[1, 2, 2, 1])
-expected_preds_u2i = DataFrame(:userid=>[10, 30, 50], :preds=>[[500], [400], [500]])
-expected_preds_i2i = DataFrame(:itemid=>[400, 500, 600, 400], :preds=>[[500], [400], nothing, [500]])
-@test predict_u2i(knn, Xnew) == expected_preds_u2i
-@test predict_i2i(knn, Xnew) == expected_preds_i2i
+Xnew = [10, 30, 50]
+expected_preds = [[10, [500]], [30, nothing], [50, nothing]]
+@test retrieve(knn, Xnew) == expected_preds
 
 # test MLJ by Tables.columntable format
 X = X |>  Tables.columntable
 model = ItemkNN(k=1)
 knn = machine(model, X)
 fit!(knn)
-@test knn.fitresult[1] ≈ expected_fitresult[1]
+@test knn.fitresult[1] ≈ expected_fitresult[1] atol=1e-3
 @test knn.fitresult[2] == expected_fitresult[2]
 @test knn.fitresult[3] == expected_fitresult[3]
+@test knn.fitresult[4] == expected_fitresult[4]
+@test knn.fitresult[5] == expected_fitresult[5]
 @test knn.cache === nothing
 @test knn.report === nothing
 
-Xnew = Xnew |> Tables.columntable
-@test predict_u2i(knn, Xnew) == expected_preds_u2i
-@test predict_i2i(knn, Xnew) == expected_preds_i2i
+@test retrieve(knn, Xnew) == expected_preds

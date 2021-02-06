@@ -22,7 +22,7 @@ function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
     end
     similarity = compute_similarity(Xsparse, model.k, model.shrink)
 
-    fitresult = (similarity, user2uidx, item2iidx, iidx2item)
+    fitresult = (similarity, Xsparse, user2uidx, item2iidx, iidx2item)
     report    = nothing
     cache     = nothing
     return fitresult, cache, report
@@ -30,67 +30,29 @@ end
 
 reformat(model::ItemkNN, Xraw) = (Xraw,)
 
-"""
-    predict_i2i(model::ItemkNN, fitresult, itemids)
-
-Return top k prediction to each query item in `itemids`.
-`itemids` is Tables.jl-compatible object,
-which originally was itemid vector.
-"""
-function predict_i2i(model::ItemkNN, fitresult, Xnew)
-    itemids = Xnew.itemid
-    similarity, _, item2iidx, iidx2item = fitresult
-
+function retrieve(model::ItemkNN, fitresult, X)
+    similarity, rating, user2uidx, item2iidx, iidx2item = fitresult
     preds = []
-    for itemid in itemids
-        if itemid in keys(item2iidx)
-            I, _ = findnz(similarity[:, item2iidx[itemid]])
-            pred = [iidx2item[i] for i in I]
+    for uid in X
+        if uid in keys(user2uidx)
+            uidx = user2uidx[uid]
+            pred = sortperm((rating[uidx, :]' * similarity)', rev=true)
+
+            # filter out already consumed items.
+            I, R = findnz(rating[uidx, :])
+            filter!(p->!(p in I), pred)
+
+            if length(pred) == 0
+                pred = nothing
+            else
+                pred = [iidx2item[i] for i in pred]
+            end
+            append!(preds, [[uid, pred]])
         else
-            # TODO: should we raise error?
-            pred = nothing
+            append!(preds, [[uid, nothing]])
         end
-        append!(preds, [pred])
     end
-    return DataFrame(:itemid=>itemids, :preds=>preds)
-end
-
-"""
-    predict_u2i(model::ItemkNN, fitresult, Xnew)
-
-Return top k prediction to each user in `Xnew`,
-which also entails user history of item consumption.
-`Xnew` is Tables.jl-compatible object whose columns 
-consists of (:userid, :itemid, :target).
-"""
-function predict_u2i(model::ItemkNN, fitresult, Xnew)
-    X, = unpack(Xnew, in((:userid, :itemid, :target));
-        :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
-    similarity, _, item2iidx, iidx2item = fitresult
-
-    userids = unique(X.userid)
-
-    # remove cold items because it does not exist in sim. mat.
-    itemids = keys(item2iidx)
-    X = X |>  TableOperations.filter(x->Tables.getcolumn(x, :itemid) in itemids) |> Tables.columntable
-    # TODO: what happens if some user ids are lost by this filter?
-
-    Xsparse, user2uidx, _ = transform2sparse(X)
-
-    preds = []
-    for uid in userids
-        uidx = user2uidx[uid]
-        pred = sortperm((Xsparse[uidx, :]' * similarity)', rev=true)
-
-        # filter out already consumed items.
-        I, R = findnz(Xsparse[uidx, :])
-        filter!(p->!(p in I), pred)
-
-        pred = [iidx2item[i] for i in pred]
-
-        append!(preds, [pred])
-    end
-    return DataFrame(:userid=>userids, :preds=>preds)
+    return preds
 end
 
 function transform2sparse(X)
