@@ -11,11 +11,12 @@ end
 for operation in OPERATIONS
     # similar code used in MLJBase
     ex = quote
-        function $operation(mach::Machine, Xraw)
+        function $operation(mach::Machine, X, k)
             if mach.state > 0
                 return $(operation)(mach.model,
                                     mach.fitresult,
-                                    reformat(mach.model, Xraw)...)
+                                    X,
+                                    k)
             else
                 error("$mach has not been trained.")
             end

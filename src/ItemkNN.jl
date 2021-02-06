@@ -30,7 +30,7 @@ end
 
 reformat(model::ItemkNN, Xraw) = (Xraw,)
 
-function retrieve(model::ItemkNN, fitresult, X)
+function retrieve(model::ItemkNN, fitresult, X, n)
     similarity, rating, user2uidx, item2iidx, iidx2item = fitresult
     preds = []
     for uid in X
@@ -46,6 +46,9 @@ function retrieve(model::ItemkNN, fitresult, X)
                 pred = nothing
             else
                 pred = [iidx2item[i] for i in pred]
+                if length(pred) > n
+                    pred = pred[1:n]
+                end
             end
             append!(preds, [[uid, pred]])
         else

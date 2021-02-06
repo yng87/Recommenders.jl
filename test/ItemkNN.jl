@@ -45,7 +45,7 @@ expected_fitresult = (
 
 Xnew = [10, 30, 50]
 expected_preds = [[10, [500]], [30, nothing], [50, nothing]]
-@test retrieve(knn, Xnew) == expected_preds
+@test retrieve(knn, Xnew, 1) == expected_preds
 
 # test MLJ by Tables.columntable format
 X = X |>  Tables.columntable
@@ -60,4 +60,4 @@ fit!(knn)
 @test knn.cache === nothing
 @test knn.report === nothing
 
-@test retrieve(knn, Xnew) == expected_preds
+@test retrieve(knn, Xnew, 1) == expected_preds
