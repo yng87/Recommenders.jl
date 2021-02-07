@@ -8,7 +8,7 @@ Compute mean HR.
 ```jldoctest
 julia> hitrate([[1, 3], nothing, [2, 4]], [1, 2, 3])
 0.3333333333333
-````
+```
 """
 function hitrate(recommends, ys)
     hr = 0
