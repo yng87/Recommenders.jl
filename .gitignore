@@ -1,4 +1,5 @@
 /Manifest.toml
+/docs/Manifest.toml
 /docs/build/
 /dataset/*
 !/dataset/datasets.csv
