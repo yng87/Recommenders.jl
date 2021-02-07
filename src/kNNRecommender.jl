@@ -1,3 +1,11 @@
+"""
+    kNNRecommender
+
+- k: compute k nearest neighbor similarity.
+- shrink: if nonzero, decrease contributions from items with few rating.
+- weighting: currently supoorts TF-IDF
+- npred: number of retrieval by predict.
+"""
 @with_kw_noshow mutable struct kNNRecommender <: MLJBase.Deterministic
     k::Int = 100
     shrink::Float64 = 0
@@ -5,6 +13,12 @@
     npred::Int = 10
 end
 
+"""
+    fit(model::kNNRecommender, verbosity::Int, X, y, w=nothing)
+
+fit `kNNRecommender`. For ItemkNN, `X` = userids, `y` = itemids.
+`w` is additional weighting, for instance, rating of user to item.
+"""
 function MLJBase.fit(model::kNNRecommender, verbosity::Int, X, y, w=nothing)
     if isnothing(w)
         if verbosity > 0
@@ -18,10 +32,10 @@ function MLJBase.fit(model::kNNRecommender, verbosity::Int, X, y, w=nothing)
     Xsparse, user2uidx, item2iidx = transform2sparse(raw)
     iidx2item = Dict(i=>iid for (iid, i) in item2iidx)
 
+    if verbosity > 0 && !isnothing(model.weighting)
+        println("Weighting by $(model.weighting).")
+    end
     if model.weighting == :tfidf
-        if verbosity > 0
-            println("Weighting by $(model.weighting).")
-        end
         Xsparse = tfidf(Xsparse)
     end
     similarity = compute_similarity(Xsparse, model.k, model.shrink)
