@@ -1,23 +1,27 @@
-"""
-    ItemkNN(k, shrink, weighting)
-
-ItemkNN Recommender. Currently supports weighting only by TF-IDF.
-Assume table inputs with column name (:userid, :itemid, :target).
-"""
-@with_kw_noshow mutable struct ItemkNN <: MLJBase.Unsupervised
-    k::Int = 10
+@with_kw_noshow mutable struct kNNRecommender <: MLJBase.Deterministic
+    k::Int = 100
     shrink::Float64 = 0
     weighting::Union{Nothing, Symbol} = nothing
+    npred::Int = 10
 end
 
-function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
-    raw, = unpack(X, in((:userid, :itemid, :target));
-        :userid=>Multiclass, :itemid=>Multiclass, :target=>Continuous)
+function MLJBase.fit(model::kNNRecommender, verbosity::Int, X, y, w=nothing)
+    if isnothing(w)
+        if verbosity > 0
+            println("w is not specified. It is filled by unity.")
+        end
+        w = ones(length(y))
+    end
+
+    raw = (userid = X, itemid = y, target = w)
     
     Xsparse, user2uidx, item2iidx = transform2sparse(raw)
     iidx2item = Dict(i=>iid for (iid, i) in item2iidx)
 
     if model.weighting == :tfidf
+        if verbosity > 0
+            println("Weighting by $(model.weighting).")
+        end
         Xsparse = tfidf(Xsparse)
     end
     similarity = compute_similarity(Xsparse, model.k, model.shrink)
@@ -28,9 +32,8 @@ function MLJBase.fit(model::ItemkNN, verbosity::Int, X)
     return fitresult, cache, report
 end
 
-reformat(model::ItemkNN, Xraw) = (Xraw,)
-
-function retrieve(model::ItemkNN, fitresult, X, n)
+function MLJBase.predict(model::kNNRecommender, fitresult, X)
+    n = model.npred
     similarity, rating, user2uidx, item2iidx, iidx2item = fitresult
     preds = []
     for uid in X
@@ -50,9 +53,9 @@ function retrieve(model::ItemkNN, fitresult, X, n)
                     pred = pred[1:n]
                 end
             end
-            append!(preds, [[uid, pred]])
+            append!(preds, [pred])
         else
-            append!(preds, [[uid, nothing]])
+            append!(preds, [nothing])
         end
     end
     return preds
