@@ -5,7 +5,9 @@ Compute mean HR.
 # arguments
 - recommends: recommends[i] is list of predictions for i-th input.
 - ys: ys[i] is ground-truth for i-th input.
+
 ```jldoctest
+using Recommender
 julia> hitrate([[1, 3], nothing, [2, 4]], [1, 2, 3])
 0.3333333333333
 ```
