@@ -1,6 +1,6 @@
 module Recommender
 
-export download, dataset, load, ItemkNN
+export download, dataset, load, kNNRecommender
 
 using HTTP, ZipFile, DataFrames, CSV, SparseArrays, MLJ, MLJBase, Parameters, Tables, TableOperations
 import Base: download
