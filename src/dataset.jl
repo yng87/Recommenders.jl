@@ -19,7 +19,8 @@ struct Dataset <: AbstractDataset
     dirpath::AbstractString
 end
 
-Dataset(name, format, url) = Dataset(name, format, url, joinpath(@__DIR__, "..", "dataset", name))
+Dataset(name, format, url) =
+    Dataset(name, format, url, joinpath(@__DIR__, "..", "dataset", name))
 
 """
     datasets()

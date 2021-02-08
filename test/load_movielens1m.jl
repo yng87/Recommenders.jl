@@ -2,7 +2,7 @@ using Recommender
 using Test
 
 d = dataset("movielens1m")
-download(d, usecache=false, removezip=true, unzip=true)
+download(d, usecache = false, removezip = true, unzip = true)
 rating, user, movie = load(d)
 
 @test size(rating) == (1000209, 4)

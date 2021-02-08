@@ -25,7 +25,7 @@ function download_zip(url::AbstractString, name::AbstractString, dirpath::String
         HTTP.request("GET", url, response_stream=io)
     catch e
         if isfile(zippath)
-          rm(zippath)
+            rm(zippath)
         end
         throw(e)
     end
@@ -36,7 +36,7 @@ function download_zip(url::AbstractString, name::AbstractString, dirpath::String
         r = ZipFile.Reader(zippath)
         try
             for f in r.files
-                if f.name[end]=='/'
+                if f.name[end] == '/'
                     continue
                 end
                 println("Extracting $(f.name)")
