@@ -8,28 +8,35 @@ Download zipped dataset `name` from `url`, and place it to `dirpath`.
 - `unzip=true`: whether extract datasets from zip.
 - `removezip=false`: whether remove original zip after extraction.
 """
-function download_zip(url::AbstractString, name::AbstractString, dirpath::String; usecache=true, unzip=true, removezip=false)
+function download_zip(
+    url::AbstractString,
+    name::AbstractString,
+    dirpath::String;
+    usecache = true,
+    unzip = true,
+    removezip = false,
+)
     if usecache && isdir(dirpath)
         return
     end
     if isdir(dirpath)
-        rm(dirpath, force=true, recursive=true)
+        rm(dirpath, force = true, recursive = true)
     end
 
     # download zip
     mkdir(dirpath)
     zippath = joinpath(dirpath, "$(name).zip")
-    
+
     try
         io = open(zippath, "w")
-        HTTP.request("GET", url, response_stream=io)
+        HTTP.request("GET", url, response_stream = io)
     catch e
         if isfile(zippath)
             rm(zippath)
         end
         throw(e)
     end
-   
+
 
     # unzip
     if unzip

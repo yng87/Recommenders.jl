@@ -49,11 +49,13 @@ end
 function MLJBase.predict(model::kNNRecommender, fitresult, X)
     n = model.npred
     similarity, rating, user2uidx, item2iidx, iidx2item = fitresult
-    preds = []
-    for uid in X
+    preds = Array{Any}(undef, length(X))
+    Threads.@threads for i in axes(X, 1)
+        uid = X[i]
         if uid in keys(user2uidx)
             uidx = user2uidx[uid]
-            pred = sortperm((rating[uidx, :]' * similarity)', rev = true)
+            # Note: この計算合ってる？
+            pred = sortperm(similarity * rating[uidx, :], rev = true)
 
             # filter out already consumed items.
             I, R = findnz(rating[uidx, :])
@@ -67,9 +69,9 @@ function MLJBase.predict(model::kNNRecommender, fitresult, X)
                     pred = pred[1:n]
                 end
             end
-            append!(preds, [pred])
+            preds[i] = pred
         else
-            append!(preds, [nothing])
+            preds[i] = nothing
         end
     end
     return preds
