@@ -27,14 +27,16 @@ function download_zip(
     mkdir(dirpath)
     zippath = joinpath(dirpath, "$(name).zip")
 
+    io = open(zippath, "w")
     try
-        io = open(zippath, "w")
         HTTP.request("GET", url, response_stream = io)
     catch e
         if isfile(zippath)
             rm(zippath)
         end
         throw(e)
+    finally
+        close(io)
     end
 
 
