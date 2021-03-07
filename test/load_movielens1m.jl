@@ -1,9 +1,13 @@
-using Recommender
+using Recommender: Movielens1M
 using Test
 
-d = dataset("movielens1m")
-download(d, usecache = false, removezip = true, unzip = true)
-rating, user, movie = load(d)
+# d = dataset("movielens1m")
+# download(d, usecache = false, removezip = true, unzip = true)
+# rating, user, movie = load(d)
+
+ml1m = Movielens1M()
+download(ml1m, usecache = false, removezip = true, unzip = true)
+rating, user, movie = load(ml1m)
 
 @test size(rating) == (1000209, 4)
 @test names(rating) == ["userid", "movieid", "rating", "timestamp"]
