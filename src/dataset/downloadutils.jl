@@ -24,7 +24,7 @@ function download_zip(
     end
 
     # download zip
-    mkdir(dirpath)
+    mkpath(dirpath)
     zippath = joinpath(dirpath, "$(name).zip")
 
     io = open(zippath, "w")

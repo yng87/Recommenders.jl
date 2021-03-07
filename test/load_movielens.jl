@@ -1,4 +1,4 @@
-using Recommender: Movielens1M, Movielens100k
+using Recommender: Movielens1M, Movielens100k, download
 using Test
 
 println("test Movielens1M")
