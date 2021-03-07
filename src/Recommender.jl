@@ -5,7 +5,16 @@ export download, dataset, load, kNNRecommender
 # metrics
 export hitrate
 
-using HTTP, ZipFile, DataFrames, CSV, SparseArrays, MLJ, MLJBase, Parameters, Tables, TableOperations
+using HTTP,
+    ZipFile,
+    DataFrames,
+    CSV,
+    SparseArrays,
+    MLJ,
+    MLJBase,
+    Parameters,
+    Tables,
+    TableOperations
 import Base: download
 
 include("downloadutils.jl")

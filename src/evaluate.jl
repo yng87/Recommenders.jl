@@ -20,8 +20,12 @@ julia> hitrate([[1, 3], nothing, [2, 4], []], [1, 2, 3, 4])
 function hitrate(recommends, ys)
     hr = 0
     for (y, r) in zip(ys, recommends)
-        if isnothing(r) continue end
-        if y in r hr += 1 end
+        if isnothing(r)
+            continue
+        end
+        if y in r
+            hr += 1
+        end
     end
     return hr / length(ys)
 end
