@@ -1,6 +1,6 @@
 module Recommender
 
-export download, dataset, load, kNNRecommender
+export download, load, kNNRecommender
 
 # metrics
 export hitrate
@@ -17,9 +17,11 @@ using HTTP,
     TableOperations
 import Base: download
 
-include("downloadutils.jl")
-include("loadutils.jl")
-include("dataset.jl")
+include("dataset/downloadutils.jl")
+include("dataset/loadutils.jl")
+include("dataset/dataset.jl")
+include("dataset/movielens.jl")
+
 include("evaluate.jl")
 
 include("kNNRecommender.jl")
