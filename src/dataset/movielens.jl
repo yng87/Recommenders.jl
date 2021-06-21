@@ -7,8 +7,8 @@ function load(d::Movielens)
     error("load method is not implemented.")
 end
 
-function load_rating(d::Movielens)
-    error("load_rating method is not implemented.")
+function load_inter(d::Movielens)
+    error("load_inter method is not implemented.")
 end
 
 function download(d::Movielens; kwargs...)
@@ -26,35 +26,32 @@ Movielens100k
 end
 
 function load(d::Movielens100k)
-    return load_rating(d), load_user(d), load_item(d)
+    return load_inter(d), load_user(d), load_item(d)
 end
 
-function load_rating(d::Movielens100k)
-    df = loadcsv(
+function load_inter(d::Movielens100k)
+    csv = CSV.File(
         joinpath(d.dataset_dir, "u.data"),
         delim = "\t",
-        header = 0,
-        columns = [:userid, :movieid, :rating, :timestamp],
+        header = [:userid, :movieid, :rating, :timestamp],
     )
-    return df
+    return csv
 end
 
 function load_user(d::Movielens100k)
-    df = loadcsv(
+    csv = CSV.File(
         joinpath(d.dataset_dir, "u.user"),
         delim = "|",
-        header = 0,
-        columns = [:userid, :age, :gender, :occupation, :zipcode],
+        header = [:userid, :age, :gender, :occupation, :zipcode],
     )
-    return df
+    return csv
 end
 
 function load_item(d::Movielens100k)
-    df = loadcsv(
+    csv = CSV.File(
         joinpath(d.dataset_dir, "u.item"),
         delim = "|",
-        header = 0,
-        columns = [
+        header = [
             :movieid,
             :movie_title,
             :release_date,
@@ -81,7 +78,7 @@ function load_item(d::Movielens100k)
             :Western,
         ],
     )
-    return df
+    return csv
 end
 
 """
@@ -95,35 +92,32 @@ Movielens1M
 end
 
 function load(d::Movielens1M)
-    return load_rating(d), load_user(d), load_item(d)
+    return load_inter(d), load_user(d), load_item(d)
 end
 
-function load_rating(d::Movielens1M)
-    df = loadcsv(
+function load_inter(d::Movielens1M)
+    csv = CSV.File(
         joinpath(d.dataset_dir, "ratings.dat"),
         delim = "::",
-        header = 0,
-        columns = [:userid, :movieid, :rating, :timestamp],
+        header = [:userid, :movieid, :rating, :timestamp],
     )
-    return df
+    return csv
 end
 
 function load_user(d::Movielens1M)
-    df = loadcsv(
+    csv = CSV.File(
         joinpath(d.dataset_dir, "users.dat"),
         delim = "::",
-        header = 0,
-        columns = [:userid, :gender, :age, :occupation, :zipcode],
+        header = [:userid, :gender, :age, :occupation, :zipcode],
     )
-    return df
+    return csv
 end
 
 function load_item(d::Movielens1M)
-    df = loadcsv(
+    csv = CSV.File(
         joinpath(d.dataset_dir, "movies.dat"),
         delim = "::",
-        header = 0,
-        columns = [:movieid, :title, :genres],
+        header = [:movieid, :title, :genres],
     )
-    return df
+    return csv
 end

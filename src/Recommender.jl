@@ -18,7 +18,6 @@ using HTTP,
 import Base: download
 
 include("dataset/downloadutils.jl")
-include("dataset/loadutils.jl")
 include("dataset/dataset.jl")
 include("dataset/movielens.jl")
 
