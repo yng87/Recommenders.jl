@@ -1,5 +1,6 @@
 module Recommender
 
+using TableOperations: include
 export download, load, kNNRecommender
 
 # metrics
@@ -21,8 +22,10 @@ include("dataset/downloadutils.jl")
 include("dataset/dataset.jl")
 include("dataset/movielens.jl")
 
+include("model/BaseRecommender.jl")
+include("model/kNNRecommender.jl")
+
 include("evaluate.jl")
 
-include("kNNRecommender.jl")
 
 end
