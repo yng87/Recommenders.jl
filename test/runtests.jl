@@ -2,7 +2,7 @@ using Recommender
 using Test
 
 const tests = [
-    # "load_movielens.jl",
+    "load_movielens.jl",
     "kNNRecommender.jl"
 ]
 

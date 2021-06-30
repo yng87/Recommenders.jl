@@ -35,7 +35,6 @@ function retrieve(model::kNNRecommender, user_history, n; drop_history=false)
     if drop_history
         filter!(p -> !(p in user_history), pred)
     end
-    @show n, pred, length(pred), length(pred)>n
     n = min(n, length(pred))
     return pred[1:n]
 end
