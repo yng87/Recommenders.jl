@@ -27,7 +27,13 @@ expected_similarity =
 
 # retirieve
 user_history = sparse([1, 0])
-@test retrieve(model, mach.fitresult, user_history, 1, drop_history = true) == [2]
-@test retrieve(model, mach.fitresult, user_history, 1, drop_history = false) == [2]
-@test retrieve(model, mach.fitresult, user_history, 2, drop_history = true) == [2]
-@test retrieve(model, mach.fitresult, user_history, 2, drop_history = false) == [2, 1]
+@test retrieve(model, mach.fitresult, user_history, 1) == [2]
+@test retrieve(model, mach.fitresult, user_history, 2) == [2, 1]
+
+@test retrieve(mach, user_history, 1) == [2]
+@test retrieve(mach, user_history, 2) == [2, 1]
+
+# @test retrieve(model, mach.fitresult, user_history, 1, drop_history = true) == [2]
+# @test retrieve(model, mach.fitresult, user_history, 1, drop_history = false) == [2]
+# @test retrieve(model, mach.fitresult, user_history, 2, drop_history = true) == [2]
+# @test retrieve(model, mach.fitresult, user_history, 2, drop_history = false) == [2, 1]

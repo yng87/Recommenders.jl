@@ -1,11 +1,3 @@
-"""
-    ItemkNN
-
-- k: compute k nearest neighbor similarity.
-- shrink: if nonzero, decrease contributions from items with few rating.
-- weighting: currently supoorts TF-IDF
-- npred: number of retrieval by predict.
-"""
 @with_kw_noshow mutable struct ItemkNN <: MMI.Unsupervised
     # config
     k::Int = 100
@@ -37,6 +29,20 @@ function MMI.fit(model::ItemkNN, verbosity, X)
     return fitresult, cache, report
 end
 
+function retrieve(model::ItemkNN, fitresult, user_history, n)
+    similarity = fitresult[1]
+    num = similarity * user_history
+    denom = sum(similarity, dims = 2)
+    denom = dropdims(denom, dims = 2)
+    pred = sortperm(num ./ denom, rev = true)
+
+    # if drop_history
+    #     filter!(p -> !(p in user_history), pred)
+    # end
+    n = min(n, length(pred))
+    return pred[1:n]
+end
+
 function rows2sparse(X; col_user = :userid, col_item = :itemid, col_rating = :rating)
     U = Int[]
     I = Int[]
@@ -49,20 +55,6 @@ function rows2sparse(X; col_user = :userid, col_item = :itemid, col_rating = :ra
     end
 
     return sparse(U, I, R)
-end
-
-function retrieve(model::ItemkNN, fitresult, user_history, n; drop_history = false)
-    similarity = fitresult[1]
-    num = similarity * user_history
-    denom = sum(similarity, dims = 2)
-    denom = dropdims(denom, dims = 2)
-    pred = sortperm(num ./ denom, rev = true)
-
-    if drop_history
-        filter!(p -> !(p in user_history), pred)
-    end
-    n = min(n, length(pred))
-    return pred[1:n]
 end
 
 function tfidf(X::SparseMatrixCSC)

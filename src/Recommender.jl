@@ -1,7 +1,7 @@
 module Recommender
 
 using TableOperations: include
-export download, load_all, ItemkNN
+export download, load_all, retrieve, ItemkNN
 
 # metrics
 export hitrate
@@ -24,7 +24,7 @@ include("dataset/downloadutils.jl")
 include("dataset/dataset.jl")
 include("dataset/movielens.jl")
 
-include("model/BaseRecommender.jl")
+include("model/extended_operations.jl")
 include("model/item_knn.jl")
 
 include("evaluate.jl")
