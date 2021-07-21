@@ -1,8 +1,7 @@
 using Recommender
 using Test
 
-# const tests = ["load_movielens1m.jl", "kNNRecommender.jl"]
-const tests = ["load_movielens.jl"]
+const tests = ["load_movielens.jl", "item_knn.jl"]
 
 for t in tests
     @testset "Test $t" begin

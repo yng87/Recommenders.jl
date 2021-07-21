@@ -1,6 +1,6 @@
 abstract type Movielens <: AbstractDataset end
 
-function load(d::Movielens)
+function load_dataset(d::Movielens)
     # Movielens dataset has different kinds of meta data,
     # depending on the size of rating.
     # So we leave load function as abstract.
@@ -25,7 +25,7 @@ Movielens100k
     dataset_dir::AbstractString = joinpath(@__DIR__, "..", "..", "dataset", "movielens100k")
 end
 
-function load(d::Movielens100k)
+function load_dataset(d::Movielens100k)
     return load_inter(d), load_user(d), load_item(d)
 end
 
@@ -91,7 +91,7 @@ Movielens1M
     dataset_dir::AbstractString = joinpath(@__DIR__, "..", "..", "dataset", "movielens1m")
 end
 
-function load(d::Movielens1M)
+function load_dataset(d::Movielens1M)
     return load_inter(d), load_user(d), load_item(d)
 end
 

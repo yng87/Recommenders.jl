@@ -1,6 +1,7 @@
 module Recommender
 
-export download, load, kNNRecommender
+using TableOperations: include
+export download, load_dataset, retrieve, ItemkNN
 
 # metrics
 export hitrate
@@ -16,13 +17,17 @@ using HTTP,
     Tables,
     TableOperations
 import Base: download
+import MLJModelInterface
+const MMI = MLJModelInterface
 
 include("dataset/downloadutils.jl")
 include("dataset/dataset.jl")
 include("dataset/movielens.jl")
 
+include("model/extended_operations.jl")
+include("model/item_knn.jl")
+
 include("evaluate.jl")
 
-include("kNNRecommender.jl")
 
 end
