@@ -1,5 +1,5 @@
 using Test, DataFrames, SparseArrays, MLJ, Tables
-using Recommender: tfidf, compute_similarity, kNNRecommender, fit, retrieve
+using Recommender: tfidf, compute_similarity, ItemkNN, fit, retrieve
 
 # tfidf
 inter = sparse([1, 1, 1, 2], [1, 2, 3, 3], [1.0, 3.0, 5.0, 2.0])
@@ -17,9 +17,8 @@ evaluated = compute_similarity(X, 1, 0.0, true)
 @test evaluated ≈ expected
 
 # test MLJ integration
-# inter = sparse([1, 2, 2], [1, 1, 2], [1.0, 2.0, 1.0])
 inter = (userid = [1, 2, 2], itemid = [1, 1, 2], rating = [1.0, 2.0, 1.0])
-model = kNNRecommender(k = 1)
+model = ItemkNN(k = 1)
 mach = machine(model, inter)
 fit!(mach)
 expected_similarity =

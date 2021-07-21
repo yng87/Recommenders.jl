@@ -1,12 +1,12 @@
 """
-    kNNRecommender
+    ItemkNN
 
 - k: compute k nearest neighbor similarity.
 - shrink: if nonzero, decrease contributions from items with few rating.
 - weighting: currently supoorts TF-IDF
 - npred: number of retrieval by predict.
 """
-@with_kw_noshow mutable struct kNNRecommender <: MMI.Unsupervised
+@with_kw_noshow mutable struct ItemkNN <: MMI.Unsupervised
     # config
     k::Int = 100
     shrink::Float64 = 0
@@ -19,7 +19,7 @@
     # similarity = nothing
 end
 
-function MMI.fit(model::kNNRecommender, verbosity, X)
+function MMI.fit(model::ItemkNN, verbosity, X)
     X = rows2sparse(
         X,
         col_user = model.col_user,
@@ -51,7 +51,7 @@ function rows2sparse(X; col_user = :userid, col_item = :itemid, col_rating = :ra
     return sparse(U, I, R)
 end
 
-function retrieve(model::kNNRecommender, fitresult, user_history, n; drop_history = false)
+function retrieve(model::ItemkNN, fitresult, user_history, n; drop_history = false)
     similarity = fitresult[1]
     num = similarity * user_history
     denom = sum(similarity, dims = 2)
