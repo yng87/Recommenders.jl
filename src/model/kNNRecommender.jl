@@ -6,31 +6,57 @@
 - weighting: currently supoorts TF-IDF
 - npred: number of retrieval by predict.
 """
-@with_kw_noshow mutable struct kNNRecommender <: BaseRecommender
+@with_kw_noshow mutable struct kNNRecommender <: MMI.Unsupervised
     # config
     k::Int = 100
     shrink::Float64 = 0
+    normalize::Bool = true
     weighting::Union{Nothing,Symbol} = nothing
+    col_user = :userid
+    col_item = :itemid
+    col_rating = :rating
     # learned params
-    similarity = nothing
+    # similarity = nothing
 end
 
-"""
-    fit(model::kNNRecommender, inter)
-
-fit `kNNRecommender`. `inter` is interaction matrix.
-"""
-function fit!(model::kNNRecommender, inter::SparseMatrixCSC)
+function MMI.fit(model::kNNRecommender, verbosity, X)
+    X = rows2sparse(
+        X,
+        col_user = model.col_user,
+        col_item = model.col_item,
+        col_rating = model.col_rating,
+    )
     if model.weighting == :tfidf
-        inter = tfidf(inter)
+        X = tfidf(X)
     end
-    model.similarity = compute_similarity(inter, model.k, model.shrink)
-    return model
+    similarity = compute_similarity(X, model.k, model.shrink, model.normalize)
+
+    fitresult = (similarity,)
+    cache = nothing
+    report = nothing
+    return fitresult, cache, report
 end
 
-function retrieve(model::kNNRecommender, user_history, n; drop_history=false)
-    similarity = model.similarity
-    pred = sortperm(similarity * user_history, rev = true)
+function rows2sparse(X; col_user = :userid, col_item = :itemid, col_rating = :rating)
+    U = Int[]
+    I = Int[]
+    R = Float64[]
+
+    for row in Tables.rows(X)
+        push!(U, row[col_user])
+        push!(I, row[col_item])
+        push!(R, row[col_rating])
+    end
+
+    return sparse(U, I, R)
+end
+
+function retrieve(model::kNNRecommender, fitresult, user_history, n; drop_history = false)
+    similarity = fitresult[1]
+    num = similarity * user_history
+    denom = sum(similarity, dims = 2)
+    denom = dropdims(denom, dims = 2)
+    pred = sortperm(num ./ denom, rev = true)
 
     if drop_history
         filter!(p -> !(p in user_history), pred)
@@ -57,18 +83,23 @@ function tfidf(X::SparseMatrixCSC)
     return sparse(U, I, R)
 end
 
-function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64)
+function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64, normalize::Bool)
     # (user, item)^T * (user, item) -> (item, item)
     # Return S[i, j] where j is full items, and i is related items at topK
+    if shrink < 0
+        throw(ArgumentError("shrink must be 0 or positive."))
+    end
 
     simJ = Int[]
     simI = Int[]
     simS = Float64[]
 
-    U, I, R = findnz(X)
-    n_users, n_items = size(X)
+    _, n_items = size(X)
+
+    topK = min(topK, n_items - 1)
 
     norms = sqrt.(sum(X .^ 2, dims = 1))
+    norms = dropdims(norms, dims = 1)
 
     for j = 1:n_items
         Uj, Rj = findnz(X[:, j])
@@ -77,7 +108,9 @@ function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64)
             Iu, Ri = findnz(X[u, :])
             for (i, rui) in zip(Iu, Ri)
                 s = rui * ruj
-                s /= norms[j] * norms[i] + shrink + 1e-6
+                if normalize
+                    s /= norms[j] * norms[i] + shrink + 1e-6
+                end
                 simj[i] += s
             end
         end
