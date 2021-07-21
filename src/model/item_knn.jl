@@ -7,8 +7,6 @@
     col_user = :userid
     col_item = :itemid
     col_rating = :rating
-    # learned params
-    # similarity = nothing
 end
 
 function MMI.fit(model::ItemkNN, verbosity, X)

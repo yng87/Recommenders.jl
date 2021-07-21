@@ -9,6 +9,6 @@ function download(dataset::AbstractDataset)
     error("download method is not implemented.")
 end
 
-function load_all(dataset::AbstractDataset)
-    error("load_all method is not implemented.")
+function load_dataset(dataset::AbstractDataset)
+    error("load_dataset method is not implemented.")
 end

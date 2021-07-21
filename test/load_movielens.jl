@@ -1,11 +1,11 @@
-using Recommender: Tables, Movielens1M, Movielens100k, download, load_all
+using Recommender: Tables, Movielens1M, Movielens100k, download, load_dataset
 using Test
 
 println("test Movielens1M")
 
 ml1m = Movielens1M()
 download(ml1m, usecache = false, removezip = true, unzip = true)
-rating, user, movie = load_all(ml1m)
+rating, user, movie = load_dataset(ml1m)
 
 @test size(rating) == (1000209,)
 @test Tables.columnnames(rating) == [:userid, :movieid, :rating, :timestamp]
@@ -24,7 +24,7 @@ println("test Movielens100k")
 
 ml100k = Movielens100k()
 download(ml100k, usecache = false, removezip = true, unzip = true)
-rating, user, movie = load_all(ml100k)
+rating, user, movie = load_dataset(ml100k)
 
 @test size(rating) == (100000,)
 @test Tables.columnnames(rating) == [:userid, :movieid, :rating, :timestamp]

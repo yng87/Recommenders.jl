@@ -1,7 +1,7 @@
 module Recommender
 
 using TableOperations: include
-export download, load_all, retrieve, ItemkNN
+export download, load_dataset, retrieve, ItemkNN
 
 # metrics
 export hitrate
