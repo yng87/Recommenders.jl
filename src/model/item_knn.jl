@@ -30,6 +30,7 @@ function MMI.fit(model::ItemkNN, verbosity, X)
 end
 
 function retrieve(model::ItemkNN, fitresult, user_history, n)
+    user_history = sparse(user_history)
     similarity = fitresult[1]
     num = similarity * user_history
     denom = sum(similarity, dims = 2)
