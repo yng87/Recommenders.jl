@@ -18,6 +18,8 @@ function MMI.fit(model::ItemkNN, verbosity, X)
     )
     if model.weighting == :tfidf
         X = tfidf(X)
+    elseif model.weighting == :bm25
+        X = bm25(X)
     end
     similarity = compute_similarity(X, model.k, model.shrink, model.normalize)
 
@@ -56,6 +58,8 @@ function rows2sparse(X; col_user = :userid, col_item = :itemid, col_rating = :ra
 end
 
 function tfidf(X::SparseMatrixCSC)
+    # item = document
+    # user = term
     U, I, R = findnz(X)
     n_users, n_items = size(X)
 
@@ -64,10 +68,34 @@ function tfidf(X::SparseMatrixCSC)
         bincount[u] += 1
     end
 
-    idf = log.(n_items ./ (bincount .+ 1e-6)) .+ 1
+    idf = log.(n_items ./ (bincount .+ 1))
 
     for j = 1:length(U)
         R[j] = R[j] * idf[U[j]]
+    end
+
+    return sparse(U, I, R)
+end
+
+function bm25(X::SparseMatrixCSC, k1 = 1.2, b = 0.75)
+    U, I, R = findnz(X)
+    n_users, n_items = size(X)
+
+    bincount = zeros(n_users)
+    for u in U
+        bincount[u] += 1
+    end
+
+    idf = log.((n_items .- bincount .+ 0.5) ./ (bincount .+ 0.5))
+
+    dl = zeros(n_items)
+    for i in I
+        dl[i] += 1
+    end
+    avgdl = sum(dl) / n_items
+
+    for j = 1:length(U)
+        R[j] = R[j] * idf[U[j]] * (k1 + 1) / (1 + k1 * (1 - b + b * dl[I[j]] / avgdl))
     end
 
     return sparse(U, I, R)
