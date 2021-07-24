@@ -45,19 +45,10 @@ end
     @test evaluated ≈ expected
 end
 
-# TODO: complete this test
-# @testset "Predict user to item" begin
-#     inter = (userid = [1, 2, 2], itemid = [1, 1, 2], rating = [1.0, 2.0, 1.0])
-
-#     expected_similarity =
-#         sparse([2, 1], [1, 2], [1 * 2 / (1 * sqrt(5) + 1e-6), 1 * 2 / (1 * sqrt(5) + 1e-6)])
-#     @test mach.fitresult[1] ≈ expected_similarity
-
-#     # retirieve
-#     user_history = sparse([1, 0])
-#     @test retrieve(model, mach.fitresult, user_history, 1) == [2]
-#     @test retrieve(model, mach.fitresult, user_history, 2) == [2, 1]
-
-#     @test retrieve(mach, user_history, 1) == [2]
-#     @test retrieve(mach, user_history, 2) == [2, 1]
-# end
+@testset "Predict user to item" begin
+    inter = (userid = [1, 2, 2], itemid = [1, 1, 2], rating = [1.0, 2.0, 1.0])
+    similarity = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
+    user_history = sparse([1, 0])
+    @test predict_u2i(similarity, user_history, 1) == [2]
+    @test predict_u2i(similarity, user_history, 2) == [2, 1]
+end
