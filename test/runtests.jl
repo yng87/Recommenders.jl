@@ -1,7 +1,14 @@
 using Recommender
-using Test
+using Test, Documenter
 
-const tests = ["load_movielens.jl", "item_knn.jl", "data_split.jl", "metric.jl"]
+
+const tests = [
+    "dataset/movielens.jl",
+    "dataset/data_split.jl",
+    "dataset/data_utils.jl",
+    "algorithm/item_knn.jl",
+    "metric.jl",
+]
 
 for t in tests
     @testset "Test $t" begin

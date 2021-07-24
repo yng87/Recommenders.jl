@@ -1,10 +1,6 @@
 module Recommender
 
 using TableOperations: include
-export download, load_dataset, retrieve, ItemkNN
-
-# metrics
-export hitrate
 
 using HTTP,
     ZipFile,
@@ -24,11 +20,10 @@ const MMI = MLJModelInterface
 include("dataset/downloadutils.jl")
 include("dataset/dataset.jl")
 include("dataset/movielens.jl")
+include("dataset/data_split.jl")
+include("dataset/data_utils.jl")
 
-include("data_split.jl")
-
-include("model/extended_operations.jl")
-include("model/item_knn.jl")
+include("algorithm/item_knn.jl")
 
 include("metric.jl")
 

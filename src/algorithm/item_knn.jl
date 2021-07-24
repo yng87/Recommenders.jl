@@ -1,63 +1,3 @@
-@with_kw_noshow mutable struct ItemkNN <: MMI.Unsupervised
-    # config
-    k::Int = 100
-    shrink::Float64 = 0
-    normalize::Bool = true
-    weighting::Union{Nothing,Symbol} = nothing
-    col_user = :userid
-    col_item = :itemid
-    col_rating = :rating
-end
-
-function MMI.fit(model::ItemkNN, verbosity, X)
-    X = rows2sparse(
-        X,
-        col_user = model.col_user,
-        col_item = model.col_item,
-        col_rating = model.col_rating,
-    )
-    if model.weighting == :tfidf
-        X = tfidf(X)
-    elseif model.weighting == :bm25
-        X = bm25(X)
-    end
-    similarity = compute_similarity(X, model.k, model.shrink, model.normalize)
-
-    fitresult = (similarity,)
-    cache = nothing
-    report = nothing
-    return fitresult, cache, report
-end
-
-function retrieve(model::ItemkNN, fitresult, user_history, n)
-    user_history = sparse(user_history)
-    similarity = fitresult[1]
-    num = similarity * user_history
-    denom = sum(similarity, dims = 2)
-    denom = dropdims(denom, dims = 2)
-    pred = sortperm(num ./ denom, rev = true)
-
-    # if drop_history
-    #     filter!(p -> !(p in user_history), pred)
-    # end
-    n = min(n, length(pred))
-    return pred[1:n]
-end
-
-function rows2sparse(X; col_user = :userid, col_item = :itemid, col_rating = :rating)
-    U = Int[]
-    I = Int[]
-    R = Float64[]
-
-    for row in Tables.rows(X)
-        push!(U, row[col_user])
-        push!(I, row[col_item])
-        push!(R, row[col_rating])
-    end
-
-    return sparse(U, I, R)
-end
-
 function tfidf(X::SparseMatrixCSC)
     # item = document
     # user = term
@@ -140,4 +80,18 @@ function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64, norm
     end
 
     return sparse(simI, simJ, simS)
+end
+
+function predict_u2i(similarity, user_history, n)
+    user_history = sparse(user_history)
+    num = similarity * user_history
+    denom = sum(similarity, dims = 2)
+    denom = dropdims(denom, dims = 2)
+    pred = sortperm(num ./ denom, rev = true)
+
+    # if drop_history
+    #     filter!(p -> !(p in user_history), pred)
+    # end
+    n = min(n, length(pred))
+    return pred[1:n]
 end
