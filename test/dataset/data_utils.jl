@@ -24,7 +24,7 @@ end
 
 @testset "Re-index id column" begin
     df = DataFrame(id = [1, 4, 2, 1])
-    df, id2index = reindex_id_column!(df, :id, suffix = :reind)
+    df, id2index = reindex_id_column!(df, :id, suffix = :_reind)
 
     expected_df = DataFrame(id = [1, 4, 2, 1], id_reind = [1, 2, 3, 1])
     expected_mapper = Dict(1 => 1, 4 => 2, 2 => 3)

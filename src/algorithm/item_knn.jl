@@ -49,22 +49,24 @@ function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64, norm
         throw(ArgumentError("shrink must be 0 or positive."))
     end
 
-    simJ = Int[]
-    simI = Int[]
-    simS = Float64[]
-
-    _, n_items = size(X)
-
+    n_users, n_items = size(X)
     topK = min(topK, n_items - 1)
+
+    simJ = Vector{Int64}(undef, topK * n_items)
+    simI = Vector{Int64}(undef, topK * n_items)
+    simS = Vector{Float64}(undef, topK * n_items)
 
     norms = sqrt.(sum(X .^ 2, dims = 1))
     norms = dropdims(norms, dims = 1)
 
-    for j = 1:n_items
+    # to speed up, cache non zero indices
+    nonzero_I_R = [findnz(X[u, :]) for u = 1:n_users]
+
+    Threads.@threads for j = 1:n_items
         Uj, Rj = findnz(X[:, j])
         simj = zeros(n_items)
         for (u, ruj) in zip(Uj, Rj)
-            Iu, Ri = findnz(X[u, :])
+            Iu, Ri = nonzero_I_R[u]
             for (i, rui) in zip(Iu, Ri)
                 s = rui * ruj
                 if normalize
@@ -74,9 +76,9 @@ function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64, norm
             end
         end
         arg_sort_i = sortperm(simj, rev = true)[2:topK+1]
-        append!(simI, arg_sort_i)
-        append!(simS, simj[arg_sort_i])
-        append!(simJ, fill(j, length(arg_sort_i)))
+        simI[(1+(j-1)*topK):j*topK] = arg_sort_i
+        simS[(1+(j-1)*topK):j*topK] = simj[arg_sort_i]
+        simJ[(1+(j-1)*topK):j*topK] = fill(j, length(arg_sort_i))
     end
 
     return sparse(simI, simJ, simS)
