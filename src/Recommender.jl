@@ -25,6 +25,8 @@ include("dataset/data_utils.jl")
 
 include("algorithm/item_knn.jl")
 
+include("interface/item_knn.jl")
+
 include("metric.jl")
 
 
