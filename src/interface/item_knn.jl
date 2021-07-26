@@ -2,6 +2,7 @@ mutable struct ItemkNN
     k::Int64
     shrink::Float64
     weighting::Union{Nothing,Symbol}
+    weighting_at_inference::Bool
     normalize::Bool
 
     similarity::Any
@@ -10,8 +11,24 @@ mutable struct ItemkNN
     item2iidx::Union{Dict,Nothing}
     iidx2item::Union{Dict,Nothing}
 
-    ItemkNN(k::Int64, shrink::Float64, weighting::Union{Nothing,Symbol}, normalize::Bool) =
-        new(k, shrink, weighting, normalize, nothing, nothing, nothing, nothing, nothing)
+    ItemkNN(
+        k::Int64,
+        shrink::Float64,
+        weighting::Union{Nothing,Symbol},
+        weighting_at_inference::Bool,
+        normalize::Bool,
+    ) = new(
+        k,
+        shrink,
+        weighting,
+        weighting_at_inference,
+        normalize,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+    )
 end
 
 function fit!(
@@ -30,14 +47,22 @@ function fit!(
         col_item = "$(col_item)_ind",
         col_rating = col_rating,
     )
+
+    if !model.weighting_at_inference
+        model.user_histories = X
+    end
+
     if model.weighting == :tfidf
         X = tfidf(X)
     elseif model.weighting == :bm25
         X = bm25(X)
     end
 
+    if model.weighting_at_inference
+        model.user_histories = X
+    end
+
     model.similarity = compute_similarity(X, model.k, model.shrink, model.normalize)
-    model.user_histories = X
     return model
 end
 
