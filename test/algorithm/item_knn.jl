@@ -51,4 +51,6 @@ end
     user_history = sparse([1, 0])
     @test predict_u2i(similarity, user_history, 1) == [2]
     @test predict_u2i(similarity, user_history, 2) == [2, 1]
+    @test predict_u2i(similarity, user_history, 1, drop_history = true) == [2]
+    @test predict_u2i(similarity, user_history, 2, drop_history = true) == [2]
 end
