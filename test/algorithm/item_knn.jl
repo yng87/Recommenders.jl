@@ -53,4 +53,6 @@ end
     @test predict_u2i(similarity, user_history, 2) == [2, 1]
     @test predict_u2i(similarity, user_history, 1, drop_history = true) == [2]
     @test predict_u2i(similarity, user_history, 2, drop_history = true) == [2]
+    # check dispatch
+    @test predict_u2i(similarity, [1, 0], 1) == [2]
 end
