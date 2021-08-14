@@ -21,3 +21,19 @@ function reindex_id_column!(
     df[!, "$(col_id)$(suffix)"] = map(x -> id2index[x], df[!, col_id])
     return df, id2index
 end
+
+function make_u2i_dataset(table; col_user = :userid, col_item = :itemid)
+    user_actioned_items = Dict()
+    for row in eachrow(table)
+        uid = row[col_user]
+        iid = row[col_item]
+        if uid in keys(user_actioned_items)
+            push!(user_actioned_items[uid], iid)
+        else
+            user_actioned_items[uid] = [iid]
+        end
+    end
+    xs = collect(keys(user_actioned_items))
+    ys = collect(values(user_actioned_items))
+    return xs, ys
+end
