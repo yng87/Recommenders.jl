@@ -1,21 +1,8 @@
 module Recommender
 
-using TableOperations: include
 
-using HTTP,
-    ZipFile,
-    DataFrames,
-    CSV,
-    SparseArrays,
-    MLJ,
-    MLJBase,
-    Parameters,
-    Tables,
-    TableOperations,
-    Random
+using HTTP, ZipFile, DataFrames, CSV, SparseArrays, Parameters, Random, Tables
 import Base: download
-import MLJModelInterface
-const MMI = MLJModelInterface
 
 include("dataset/downloadutils.jl")
 include("dataset/dataset.jl")

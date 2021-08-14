@@ -1,5 +1,5 @@
 using CSV, SparseArrays, DataFrames
-using Recommender: rows2sparse, reindex_id_column!
+using Recommender: rows2sparse, reindex_id_column!, make_u2i_dataset
 using Test
 
 @testset "CSV to sparse matrix" begin
@@ -31,4 +31,15 @@ end
 
     @test df == expected_df
     @test id2index == expected_mapper
+end
+
+@testset "Make u2i dataset" begin
+    df = DataFrame(userid = [1, 1, 2, 3], itemid = [3, 4, 4, 1])
+    xs, ys = make_u2i_dataset(df)
+    sorted_idx = sortperm(xs)
+    xs = xs[sorted_idx]
+    ys = ys[sorted_idx]
+
+    @test xs == [1, 2, 3]
+    @test ys == [[3, 4], [4], [1]]
 end

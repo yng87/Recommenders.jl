@@ -84,16 +84,31 @@ function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64, norm
     return sparse(simI, simJ, simS)
 end
 
-function predict_u2i(similarity, user_history, n)
+function predict_u2i(
+    similarity::SparseMatrixCSC,
+    user_history::Vector,
+    n::Int64;
+    drop_history::Bool = false,
+)
     user_history = sparse(user_history)
-    num = similarity * user_history
-    denom = sum(similarity, dims = 2)
-    denom = dropdims(denom, dims = 2)
-    pred = sortperm(num ./ denom, rev = true)
+    return predict_u2i(similarity, user_history, n; drop_history = drop_history)
+end
 
-    # if drop_history
-    #     filter!(p -> !(p in user_history), pred)
-    # end
+
+function predict_u2i(
+    similarity::SparseMatrixCSC,
+    user_history::SparseVector,
+    n::Int64;
+    drop_history::Bool = false,
+)
+    # TODO: normalize するかどうかオプション
+    pred = similarity * user_history
+
+    pred = sortperm(pred, rev = true)
+
+    if drop_history
+        filter!(p -> !(p in user_history), pred)
+    end
     n = min(n, length(pred))
     return pred[1:n]
 end

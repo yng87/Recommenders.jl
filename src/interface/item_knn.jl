@@ -66,14 +66,22 @@ function fit!(
     return model
 end
 
-function predict(model::ItemkNN, userids, n::Int64)
+function predict(model::ItemkNN, userids, n::Int64; drop_history::Bool = false)
     uidxs = [get(model.user2uidx, userid, nothing) for userid in userids]
     preds = []
     for uidx in uidxs
         if uidx === nothing
             push!(preds, [])
         else
-            push!(preds, predict_u2i(model.similarity, model.user_histories[uidx, :], n))
+            push!(
+                preds,
+                predict_u2i(
+                    model.similarity,
+                    model.user_histories[uidx, :],
+                    n,
+                    drop_history = drop_history,
+                ),
+            )
         end
     end
     preds = [[model.iidx2item[iidx] for iidx in pred] for pred in preds]
@@ -89,11 +97,11 @@ function evaluate(
     col_user::Symbol = :userid,
     col_item::Symbol = :itemid,
     col_rating::Symbol = :rating,
+    drop_history::Bool = false,
 )
     fit!(model, df_train, col_user, col_item, col_rating)
-    xs = df_test[!, col_user]
-    ys = [[y] for y in df_test[!, col_item]]
-    recoms = predict(model, xs, n)
+    xs, ys = make_u2i_dataset(df_test, col_user = col_user, col_item = col_item)
+    recoms = predict(model, xs, n, drop_history = drop_history)
     result = metric(recoms, ys)
     return result
 end
