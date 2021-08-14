@@ -106,6 +106,7 @@ function predict_u2i(
 
     pred = sortperm(pred, rev = true)
 
+    # this is very slow
     if drop_history
         filter!(p -> !(p in user_history), pred)
     end

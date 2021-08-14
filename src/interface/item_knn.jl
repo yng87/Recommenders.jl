@@ -68,19 +68,17 @@ end
 
 function predict(model::ItemkNN, userids, n::Int64; drop_history::Bool = false)
     uidxs = [get(model.user2uidx, userid, nothing) for userid in userids]
-    preds = []
-    for uidx in uidxs
+    preds = Vector{Vector{Int64}}(undef, length(uidxs))
+    Threads.@threads for i in eachindex(uidxs)
+        uidx = uidxs[i]
         if uidx === nothing
-            push!(preds, [])
+            preds[i] = []
         else
-            push!(
-                preds,
-                predict_u2i(
-                    model.similarity,
-                    model.user_histories[uidx, :],
-                    n,
-                    drop_history = drop_history,
-                ),
+            preds[i] = predict_u2i(
+                model.similarity,
+                model.user_histories[uidx, :],
+                n,
+                drop_history = drop_history,
             )
         end
     end
