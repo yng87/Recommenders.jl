@@ -1,7 +1,8 @@
 module Recommender
 
 
-using HTTP, ZipFile, DataFrames, CSV, SparseArrays, Parameters, Random, Tables
+using HTTP,
+    ZipFile, DataFrames, CSV, SparseArrays, Parameters, Random, Tables, TableOperations
 import Base: download
 
 include("dataset/downloadutils.jl")
