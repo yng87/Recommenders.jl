@@ -1,4 +1,6 @@
-struct RecallAtK
+abstract type AbstractMetric end
+
+struct RecallAtK <: AbstractMetric
     k::Int64
 end
 
@@ -16,7 +18,7 @@ function (recall::RecallAtK)(recommends, ys)
     return rec / length(ys)
 end
 
-struct PrecisionAtK
+struct PrecisionAtK <: AbstractMetric
     k::Int64
 end
 

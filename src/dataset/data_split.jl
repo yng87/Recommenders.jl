@@ -20,7 +20,7 @@ function leave_one_out_split(table; col_user = :userid, col_time = :timestamp)
     return m(train_table), m(test_table)
 end
 
-function ratio_split(table; train_ratio = 0.7)
+function ratio_split(table, train_ratio = 0.7)
     (train_ratio < 0 || train_ratio > 1) &&
         throw(ArgumentError("train_ratio must be between 0 and 1."))
     # currently it requires table that is converted to DataFrame

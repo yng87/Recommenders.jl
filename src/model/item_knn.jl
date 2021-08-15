@@ -1,4 +1,4 @@
-mutable struct ItemkNN
+mutable struct ItemkNN <: AbstractRecommender
     k::Int64
     shrink::Float64
     weighting::Union{Nothing,Symbol}
@@ -31,20 +31,19 @@ mutable struct ItemkNN
     )
 end
 
-function fit!(
-    model::ItemkNN,
-    df::DataFrame,
-    col_user::Symbol,
-    col_item::Symbol,
-    col_rating::Symbol,
-)
-    df_train, model.user2uidx = reindex_id_column!(df, col_user, suffix = "_ind")
-    df_train, model.item2iidx = reindex_id_column!(df_train, col_item, suffix = "_ind")
+function fit!(model::ItemkNN, table; kwargs...)
+    col_user = get(kwargs, :col_user, :userid)
+    col_item = get(kwargs, :col_item, :itemid)
+    col_rating = get(kwargs, :col_rating, :rating)
+
+    table, model.user2uidx = reindex_id_column(table, col_user)
+    table, model.item2iidx = reindex_id_column(table, col_item)
     model.iidx2item = Dict(iidx => itemid for (itemid, iidx) in model.item2iidx)
+
     X = rows2sparse(
-        df_train,
-        col_user = "$(col_user)_ind",
-        col_item = "$(col_item)_ind",
+        table,
+        col_user = col_user,
+        col_item = col_item,
         col_rating = col_rating,
     )
 
@@ -66,7 +65,9 @@ function fit!(
     return model
 end
 
-function predict(model::ItemkNN, userids, n::Int64; drop_history::Bool = false)
+function predict_u2i(model::ItemkNN, userids, n::Int64; kwargs...)
+    drop_history = get(kwargs, :drop_history, false)
+
     uidxs = [get(model.user2uidx, userid, nothing) for userid in userids]
     preds = Vector{Vector{Int64}}(undef, length(uidxs))
     Threads.@threads for i in eachindex(uidxs)
@@ -84,22 +85,4 @@ function predict(model::ItemkNN, userids, n::Int64; drop_history::Bool = false)
     end
     preds = [[model.iidx2item[iidx] for iidx in pred] for pred in preds]
     return preds
-end
-
-function evaluate(
-    model::ItemkNN,
-    df_train::DataFrame,
-    df_test::DataFrame,
-    metric,
-    n::Int64;
-    col_user::Symbol = :userid,
-    col_item::Symbol = :itemid,
-    col_rating::Symbol = :rating,
-    drop_history::Bool = false,
-)
-    fit!(model, df_train, col_user, col_item, col_rating)
-    xs, ys = make_u2i_dataset(df_test, col_user = col_user, col_item = col_item)
-    recoms = predict(model, xs, n, drop_history = drop_history)
-    result = metric(recoms, ys)
-    return result
 end

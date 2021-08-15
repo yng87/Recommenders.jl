@@ -19,7 +19,7 @@ end
 
 @testset "Ratio split" begin
     df = DataFrame((c = [1, 1, 1, 2, 2, 3, 3, 3, 3, 4],))
-    df_train, df_test = ratio_split(df, train_ratio = 0.8)
+    df_train, df_test = ratio_split(df, 0.8)
     @test nrow(df_train) == 8
     @test nrow(df_test) == 2
 end
