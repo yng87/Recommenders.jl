@@ -26,9 +26,7 @@ end
     df = DataFrame(id = [1, 4, 2, 1])
     table, id2index = reindex_id_column(df, :id)
 
-    table = table |> Tables.columntable
-
-    expected_table = (id = [1, 2, 3, 1],)
+    expected_table = DataFrame(id = [1, 2, 3, 1])
     expected_mapper = Dict(1 => 1, 4 => 2, 2 => 3)
 
     @test table == expected_table

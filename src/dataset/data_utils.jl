@@ -17,7 +17,7 @@ function reindex_id_column(table, col_id::Symbol)
     col = col[1]
     id2index = Dict(id => index for (index, id) in enumerate(unique(col)))
     reindexed_table = table |> TableOperations.transform(Dict(col_id => x -> id2index[x]))
-    return reindexed_table, id2index
+    return Tables.materializer(table)(reindexed_table), id2index
 end
 
 function make_u2i_dataset(table; col_user = :userid, col_item = :itemid)
