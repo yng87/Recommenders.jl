@@ -4,7 +4,7 @@ function fit!(model::AbstractRecommender, table; kwargs...)
     throw("Not implemented.")
 end
 
-function predict_u2i(model::AbstractRecommender, userids, n::Int64; kwargs...)
+function predict_u2i(model::AbstractRecommender, userid, n::Int64; kwargs...)
     throw("Not implemented.")
 end
 
@@ -19,8 +19,12 @@ function evaluate_u2i(
     col_user = get(kwargs, :col_user, :userid)
     col_item = get(kwargs, :col_item, :itemid)
     fit!(model, train_table; kwargs...)
-    xs, ys = make_u2i_dataset(test_table, col_user = col_user, col_item = col_item)
-    recoms = predict_u2i(model, xs, n; kwargs...)
-    result = metric(recoms, ys)
+    userids, gts = make_u2i_dataset(test_table, col_user = col_user, col_item = col_item)
+    recoms = Vector{Vector{Int64}}(undef, length(userids))
+    Threads.@threads for i in eachindex(userids)
+        userid = userids[i]
+        recoms[i] = predict_u2i(model, userid, n; kwargs...)
+    end
+    result = metric(recoms, gts)
     return result
 end

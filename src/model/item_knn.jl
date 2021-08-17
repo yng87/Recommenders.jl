@@ -65,24 +65,20 @@ function fit!(model::ItemkNN, table; kwargs...)
     return model
 end
 
-function predict_u2i(model::ItemkNN, userids, n::Int64; kwargs...)
+function predict_u2i(model::ItemkNN, userid, n::Int64; kwargs...)
     drop_history = get(kwargs, :drop_history, false)
 
-    uidxs = [get(model.user2uidx, userid, nothing) for userid in userids]
-    preds = Vector{Vector{Int64}}(undef, length(uidxs))
-    Threads.@threads for i in eachindex(uidxs)
-        uidx = uidxs[i]
-        if uidx === nothing
-            preds[i] = []
-        else
-            preds[i] = predict_u2i(
-                model.similarity,
-                model.user_histories[uidx, :],
-                n,
-                drop_history = drop_history,
-            )
-        end
+    if userid in keys(model.user2uidx)
+        uidx = model.user2uidx[userid]
+        pred = predict_u2i(
+            model.similarity,
+            model.user_histories[uidx, :],
+            n,
+            drop_history = drop_history,
+        )
+        return [model.iidx2item[iidx] for iidx in pred]
+
+    else
+        return []
     end
-    preds = [[model.iidx2item[iidx] for iidx in pred] for pred in preds]
-    return preds
 end
