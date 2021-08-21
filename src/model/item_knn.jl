@@ -65,7 +65,7 @@ function fit!(model::ItemkNN, table; kwargs...)
     return model
 end
 
-function predict_u2i(model::ItemkNN, userid, n::Int64; kwargs...)
+function predict_u2i(model::ItemkNN, userid::Union{AbstractString,Int}, n::Int64; kwargs...)
     drop_history = get(kwargs, :drop_history, false)
 
     if userid in keys(model.user2uidx)
