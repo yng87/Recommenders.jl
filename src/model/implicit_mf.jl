@@ -41,7 +41,7 @@ function predict(model::ImplicitMF, uidx, iidx)::Float64
 end
 
 
-function sgd(model::ImplicitMF, uidx, iidx, grad, lr)
+function sgd!(model::ImplicitMF, uidx, iidx, grad, lr)
     reg = model.reg_coeff
 
     if model.use_bias
@@ -109,7 +109,7 @@ function fit!(
             n_sample += 1
 
             grad = grad_logloss(pred, 1)
-            sgd(model, uidx, iidx, grad, learning_rate)
+            sgd!(model, uidx, iidx, grad, learning_rate)
 
             # negative samples
             for _ = 1:n_negatives
@@ -120,7 +120,7 @@ function fit!(
                 n_sample += 1
 
                 grad = grad_logloss(pred, 0)
-                sgd(model, uidx, iidx, grad, learning_rate)
+                sgd!(model, uidx, iidx, grad, learning_rate)
             end
         end
 
