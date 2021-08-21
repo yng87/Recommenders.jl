@@ -13,12 +13,7 @@ function predict_u2i(
     throw("Not implemented.")
 end
 
-function predict_u2i(
-    model::AbstractRecommender,
-    userids::Vector{Any},
-    n::Int64;
-    kwargs...,
-)
+function predict_u2i(model::AbstractRecommender, userids::Vector{Any}, n::Int64; kwargs...)
     recoms = Vector{Vector{Union{AbstractString,Int}}}(undef, length(userids))
     Threads.@threads for i in eachindex(userids)
         userid = userids[i]
