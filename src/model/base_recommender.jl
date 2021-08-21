@@ -36,5 +36,26 @@ function evaluate_u2i(
     userids, gts = make_u2i_dataset(test_table, col_user = col_user, col_item = col_item)
     recoms = predict_u2i(model, userids, n; kwargs...)
     result = metric(recoms, gts)
-    return result
+    return (; Symbol(metric) => result)
+end
+
+function evaluate_u2i(
+    model::AbstractRecommender,
+    train_table,
+    test_table,
+    metrics::Union{Vector{<:AbstractMetric},Tuple{<:AbstractMetric}},
+    n::Int64;
+    kwargs...,
+)
+    col_user = get(kwargs, :col_user, :userid)
+    col_item = get(kwargs, :col_item, :itemid)
+    fit!(model, train_table; kwargs...)
+    userids, gts = make_u2i_dataset(test_table, col_user = col_user, col_item = col_item)
+    recoms = predict_u2i(model, userids, n; kwargs...)
+
+    result = Dict()
+    for metric in metrics
+        result[Symbol(metric)] = metric(recoms, gts)
+    end
+    return NamedTuple(result)
 end
