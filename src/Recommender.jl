@@ -12,11 +12,13 @@ include("dataset/data_split.jl")
 include("dataset/data_utils.jl")
 
 include("algorithm/item_knn.jl")
+include("algorithm/implicit_mf.jl")
 include("metric.jl")
 
 include("model/base_recommender.jl")
 include("model/most_popular.jl")
 include("model/item_knn.jl")
+include("model/implicit_mf.jl")
 
 
 

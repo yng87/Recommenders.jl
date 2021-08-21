@@ -13,8 +13,12 @@ function fit!(model::MostPopular, table; kwargs...)
     return model
 end
 
-function predict_u2i(model::MostPopular, userids, n::Int64; kwargs...)
+function predict_u2i(
+    model::MostPopular,
+    userid::Union{AbstractString,Int},
+    n::Int64;
+    kwargs...,
+)
     n = min(n, nrow(model.df_popular))
-    pred = model.df_popular[!, model.col_item][1:n]
-    return [pred for _ in eachindex(userids)]
+    return model.df_popular[!, model.col_item][1:n]
 end
