@@ -1,5 +1,5 @@
 using Test
-using Recommender: σ, logloss, grad_logloss
+using Recommender: σ, Logloss, grad
 
 @testset "Sigmoid." begin
     @test σ(0.0) == 0.5
@@ -11,6 +11,7 @@ using Recommender: σ, logloss, grad_logloss
 end
 
 @testset "Logloss." begin
+    logloss = Logloss()
     @test logloss(100, 1) ≈ 0
     @test logloss(-100, 1) > 20
     @test logloss(3, 0) > 3
@@ -19,30 +20,32 @@ end
 end
 
 @testset "Grad of Logloss." begin
-    @test grad_logloss(0.3243, 0) ≈ σ(0.3243)
-    @test grad_logloss(0.3243, 1) ≈ σ(0.3243) - 1
+    logloss = Logloss()
+
+    @test grad(logloss, 0.3243, 0) ≈ σ(0.3243)
+    @test grad(logloss, 0.3243, 1) ≈ σ(0.3243) - 1
 
     # check sign
     logit = 0.4
     label = 1
     loss = logloss(logit, label)
-    grad = grad_logloss(logit, label)
-    @test logloss(logit - 0.1 * grad, label) < loss
+    grad_logloss = grad(logloss, logit, label)
+    @test logloss(logit - 0.1 * grad_logloss, label) < loss
 
     label = 0
     loss = logloss(logit, label)
-    grad = grad_logloss(logit, label)
-    @test logloss(logit - 0.1 * grad, label) < loss
+    grad_logloss = grad(logloss, logit, label)
+    @test logloss(logit - 0.1 * grad_logloss, label) < loss
 
 
     logit = -0.3
     label = 1
     loss = logloss(logit, label)
-    grad = grad_logloss(logit, label)
-    @test logloss(logit - 0.1 * grad, label) < loss
+    grad_logloss = grad(logloss, logit, label)
+    @test logloss(logit - 0.1 * grad_logloss, label) < loss
 
     label = 0
     loss = logloss(logit, label)
-    grad = grad_logloss(logit, label)
-    @test logloss(logit - 0.1 * grad, label) < loss
+    grad_logloss = grad(logloss, logit, label)
+    @test logloss(logit - 0.1 * grad_logloss, label) < loss
 end

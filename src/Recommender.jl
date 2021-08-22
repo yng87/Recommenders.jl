@@ -12,7 +12,7 @@ include("dataset/data_split.jl")
 include("dataset/data_utils.jl")
 
 include("core/item_knn.jl")
-include("core/implicit_mf.jl")
+include("core/loss_function.jl")
 include("metric.jl")
 
 include("model/base_recommender.jl")
