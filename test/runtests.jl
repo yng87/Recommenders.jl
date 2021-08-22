@@ -6,8 +6,8 @@ const tests = [
     "dataset/movielens.jl",
     "dataset/data_split.jl",
     "dataset/data_utils.jl",
-    "algorithm/item_knn.jl",
-    "algorithm/implicit_mf.jl",
+    "core/item_knn.jl",
+    "core/implicit_mf.jl",
     "metric.jl",
 ]
 
