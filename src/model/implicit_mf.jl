@@ -1,5 +1,6 @@
 mutable struct ImplicitMF <: AbstractRecommender
     dim::Int64
+    loss::LossFunction
     use_bias::Bool
     reg_coeff::Float64
 
@@ -16,6 +17,7 @@ mutable struct ImplicitMF <: AbstractRecommender
 
     ImplicitMF(dim::Int64, use_bias::Bool, reg_coeff::Float64) = new(
         dim,
+        Logloss(), # default
         use_bias,
         reg_coeff,
         nothing,
@@ -41,18 +43,18 @@ function predict(model::ImplicitMF, uidx, iidx)::Float64
 end
 
 
-function sgd!(model::ImplicitMF, uidx, iidx, grad, lr)
+function sgd!(model::ImplicitMF, uidx, iidx, grad_value, lr)
     reg = model.reg_coeff
 
     if model.use_bias
-        model.user_bias[uidx] -= lr * (grad + reg * model.user_bias[uidx])
-        model.item_bias[iidx] -= lr * (grad + reg * model.item_bias[iidx])
-        model.μ -= lr * (grad + reg * model.μ)
+        model.user_bias[uidx] -= lr * (grad_value + reg * model.user_bias[uidx])
+        model.item_bias[iidx] -= lr * (grad_value + reg * model.item_bias[iidx])
+        model.μ -= lr * (grad_value + reg * model.μ)
     end
     uvec = @view model.user_embedding[:, uidx]
     ivec = @view model.item_embedding[:, iidx]
-    model.user_embedding[:, uidx] -= lr * (grad * ivec + reg * uvec)
-    model.item_embedding[:, iidx] -= lr * (grad * uvec + reg * ivec)
+    model.user_embedding[:, uidx] -= lr * (grad_value * ivec + reg * uvec)
+    model.item_embedding[:, iidx] -= lr * (grad_value * uvec + reg * ivec)
 end
 
 
@@ -96,7 +98,7 @@ function fit!(
 
 
     for epoch = 1:n_epochs
-        loss = 0
+        train_loss = 0
         n_sample = 0
         for row in Tables.rows(table)
             uidx = row[col_user]
@@ -105,22 +107,22 @@ function fit!(
             iidx = row[col_item]
 
             pred = predict(model, uidx, iidx)
-            loss = (logloss(pred, 1) + loss * n_sample) / (n_sample + 1)
+            train_loss = (model.loss(pred, 1) + train_loss * n_sample) / (n_sample + 1)
             n_sample += 1
 
-            grad = grad_logloss(pred, 1)
-            sgd!(model, uidx, iidx, grad, learning_rate)
+            grad_value = grad(model.loss, pred, 1)
+            sgd!(model, uidx, iidx, grad_value, learning_rate)
 
             # negative samples
             for _ = 1:n_negatives
                 iidx = rand(unique_items)
 
                 pred = predict(model, uidx, iidx)
-                loss = (logloss(pred, 0) + loss * n_sample) / (n_sample + 1)
+                train_loss = (model.loss(pred, 0) + train_loss * n_sample) / (n_sample + 1)
                 n_sample += 1
 
-                grad = grad_logloss(pred, 0)
-                sgd!(model, uidx, iidx, grad, learning_rate)
+                grad_value = grad(model.loss, pred, 0)
+                sgd!(model, uidx, iidx, grad_value, learning_rate)
             end
         end
 
@@ -131,7 +133,7 @@ function fit!(
                 uidx = row[col_user]
                 iidx = row[col_item]
                 pred = predict(model, uidx, iidx)
-                val_loss += logloss(pred, 1)
+                val_loss += model.loss(pred, 1)
                 n_val_sample += 1
             end
             val_loss /= n_val_sample
@@ -139,7 +141,7 @@ function fit!(
             val_loss = 0.0
         end
 
-        @info "epoch=$epoch: loss=$loss, val_loss=$val_loss"
+        @info "epoch=$epoch: train_loss=$train_loss, val_loss=$val_loss"
     end
 
 end
