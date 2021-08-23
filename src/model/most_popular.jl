@@ -6,16 +6,12 @@ mutable struct MostPopular <: AbstractRecommender
 end
 
 function fit!(model::MostPopular, table; col_user = :userid, col_item = :itemid, kwargs...)
-    @info "fit start"
     df = DataFrame(table)
-    @info "made DF"
     model.col_item = col_item
     model.df_popular = sort(combine(groupby(df, col_item), nrow), [:nrow], rev = true)
 
-    @info "train"
     users, items = make_u2i_dataset(table, col_user = col_user, col_item = col_item)
     model.user_histories = Dict()
-    @info "history"
     for (user, item) in zip(users, items)
         model.user_histories[user] = item
     end
