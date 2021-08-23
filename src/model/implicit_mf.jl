@@ -129,9 +129,17 @@ function fit!(
         if !(valid_table === nothing)
             val_loss = 0.0
             n_val_sample = 0
-            for row in Tables.rows(table)
-                uidx = row[col_user]
-                iidx = row[col_item]
+            for row in Tables.rows(valid_table)
+                user = row[col_user]
+                item = row[col_item]
+                if !(user in keys(model.user2uidx))
+                    continue
+                end
+                if !(item in keys(model.item2iidx))
+                    continue
+                end
+                uidx = model.user2uidx[user]
+                iidx = model.item2iidx[item]
                 pred = predict(model, uidx, iidx)
                 val_loss += model.loss(pred, 1)
                 n_val_sample += 1
