@@ -7,7 +7,7 @@ const tests = [
     "dataset/data_split.jl",
     "dataset/data_utils.jl",
     "core/item_knn.jl",
-    "core/implicit_mf.jl",
+    "core/loss_function.jl",
     "metric.jl",
 ]
 
