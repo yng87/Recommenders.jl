@@ -30,8 +30,8 @@ ndcg10 = NDCG(10)
 metrics = [prec10, recall10, ndcg10]
 
 space = Dict(
-    :n_epochs => HP.Choice(:n_epochs, [1, 2]),
-    # :n_epochs=>HP.Choice(:n_epochs, [32, 64, 128, 256]),
+    # :n_epochs => HP.Choice(:n_epochs, [1, 2]),
+    :n_epochs => HP.Choice(:n_epochs, [32, 64, 128, 256]),
     :n_negatives => HP.QuantUniform(:n_negatives, 1.0, 16.0, 1.0),
     :learning_rate => HP.LogUniform(:learning_rate, log(1e-3), log(1.0)),
     :log2_dimension => HP.QuantUniform(:log2_dimension, 4.0, 9.0, 1.0),
@@ -68,7 +68,7 @@ function invert_output(params)
 end
 
 @info "Tuning start."
-best = fmin(invert_output, space, 2, logging_interval = -1)
+best = fmin(invert_output, space, 20, logging_interval = -1)
 @info best
 
 @info "Evaluate best model."
