@@ -4,6 +4,7 @@ mutable struct ItemkNN <: AbstractRecommender
     weighting::Union{Nothing,Symbol}
     weighting_at_inference::Bool
     normalize::Bool
+    normalize_similarity::Bool
 
     similarity::Any
     user_histories::Any
@@ -17,12 +18,14 @@ mutable struct ItemkNN <: AbstractRecommender
         weighting::Union{Nothing,Symbol},
         weighting_at_inference::Bool,
         normalize::Bool,
+        normalize_similarity::Bool,
     ) = new(
         k,
         shrink,
         weighting,
         weighting_at_inference,
         normalize,
+        normalize_similarity,
         nothing,
         nothing,
         nothing,
@@ -61,7 +64,13 @@ function fit!(model::ItemkNN, table; kwargs...)
         model.user_histories = X
     end
 
-    model.similarity = compute_similarity(X, model.k, model.shrink, model.normalize)
+    model.similarity = compute_similarity(
+        X,
+        model.k,
+        model.shrink,
+        model.normalize,
+        model.normalize_similarity,
+    )
     return model
 end
 
