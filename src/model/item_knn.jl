@@ -65,9 +65,13 @@ function fit!(model::ItemkNN, table; kwargs...)
     return model
 end
 
-function predict_u2i(model::ItemkNN, userid::Union{AbstractString,Int}, n::Int64; kwargs...)
-    drop_history = get(kwargs, :drop_history, false)
-
+function predict_u2i(
+    model::ItemkNN,
+    userid::Union{AbstractString,Int},
+    n::Int64;
+    drop_history = false,
+    kwargs...,
+)
     if userid in keys(model.user2uidx)
         uidx = model.user2uidx[userid]
         pred = predict_u2i(

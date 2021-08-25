@@ -42,7 +42,13 @@ function bm25(X::SparseMatrixCSC, k1 = 1.2, b = 0.75)
     return sparse(U, I, R)
 end
 
-function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64, normalize::Bool)
+function compute_similarity(
+    X::SparseMatrixCSC,
+    topK::Int,
+    shrink::Float64,
+    normalize::Bool,
+    normalize_similarity::Bool,
+)
     # (user, item)^T * (user, item) -> (item, item)
     # Return S[i, j] where j is full items, and i is related items at topK
     if shrink < 0
@@ -81,7 +87,16 @@ function compute_similarity(X::SparseMatrixCSC, topK::Int, shrink::Float64, norm
         simJ[(1+(j-1)*topK):j*topK] = fill(j, length(arg_sort_i))
     end
 
-    return sparse(simI, simJ, simS)
+    similarity = sparse(simI, simJ, simS)
+
+    if normalize_similarity
+        # see M. Deshpande and G. Karypis (2004)
+        # https://doi.org/10.1145/963770.963776
+        for i = 1:size(similarity)[2]
+            similarity[:, i] /= sum(similarity[:, i])
+        end
+    end
+    return similarity
 end
 
 function predict_u2i(
@@ -101,14 +116,14 @@ function predict_u2i(
     n::Int64;
     drop_history::Bool = false,
 )
-    # TODO: normalize するかどうかオプション
-    pred = similarity * user_history
+    pred_iidx, pred_score = findnz(similarity * user_history)
+    permsocre = sortperm(pred_score, rev = true)
+    pred = pred_iidx[permsocre]
 
-    pred = sortperm(pred, rev = true)
-
+    viewed_item, _ = findnz(user_history)
     # this is very slow
     if drop_history
-        filter!(p -> !(p in user_history), pred)
+        pred = filter(p -> !(p in viewed_item), pred)
     end
     n = min(n, length(pred))
     return pred[1:n]
