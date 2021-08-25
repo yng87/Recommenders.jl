@@ -70,6 +70,7 @@ function fit!(
     learning_rate = 0.01,
     n_negatives = 1,
     early_stopping_rounds = -1,
+    verbose = -1,
     kwargs...,
 )
     model.user_history = Dict()
@@ -171,7 +172,9 @@ function fit!(
             current_metric = 0.0
         end
 
-        @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$best_val_metric, best_epoch=$best_epoch"
+        if verbose >= 1 && div(epoch, verbose) == 0
+            @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$best_val_metric, best_epoch=$best_epoch"
+        end
     end
 
 end
