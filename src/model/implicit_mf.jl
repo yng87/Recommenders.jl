@@ -63,11 +63,14 @@ function fit!(
     model::ImplicitMF,
     table;
     valid_table = nothing,
+    valid_metric = nothing,
+    valid_n = nothing,
     col_user = :userid,
     col_item = :item_id,
     n_epochs = 2,
     learning_rate = 0.01,
     n_negatives = 1,
+    early_stopping_rounds = -1,
     kwargs...,
 )
     model.user_history = Dict()
@@ -95,7 +98,14 @@ function fit!(
     end
 
 
-
+    best_epoch = 1
+    best_val_metric = 0.0
+    if !(valid_table === nothing)
+        val_xs, val_ys =
+            make_u2i_dataset(valid_table, col_user = col_user, col_item = col_item)
+        recoms = predict_u2i(model, val_xs, valid_n, drop_history = true)
+        best_val_metric = valid_metric(recoms, val_ys)
+    end
 
     for epoch = 1:n_epochs
         train_loss = 0
@@ -127,29 +137,41 @@ function fit!(
         end
 
         if !(valid_table === nothing)
-            val_loss = 0.0
-            n_val_sample = 0
-            for row in Tables.rows(valid_table)
-                user = row[col_user]
-                item = row[col_item]
-                if !(user in keys(model.user2uidx))
-                    continue
+            # val_loss = 0.0
+            # n_val_sample = 0
+            # for row in Tables.rows(valid_table)
+            #     user = row[col_user]
+            #     item = row[col_item]
+            #     if !(user in keys(model.user2uidx))
+            #         continue
+            #     end
+            #     if !(item in keys(model.item2iidx))
+            #         continue
+            #     end
+            #     uidx = model.user2uidx[user]
+            #     iidx = model.item2iidx[item]
+            #     pred = predict(model, uidx, iidx)
+            #     val_loss += model.loss(pred, 1)
+            #     n_val_sample += 1
+            # end
+            # val_loss /= n_val_sample
+            recoms = predict_u2i(model, val_xs, valid_n, drop_history = true)
+            current_metric = valid_metric(recoms, val_ys)
+
+            if early_stopping_rounds >= 1
+                if current_metric > best_val_metric
+                    best_epoch = epoch
+                    best_val_metric = current_metric
                 end
-                if !(item in keys(model.item2iidx))
-                    continue
+                if (epoch - best_epoch) >= early_stopping_rounds
+                    break
                 end
-                uidx = model.user2uidx[user]
-                iidx = model.item2iidx[item]
-                pred = predict(model, uidx, iidx)
-                val_loss += model.loss(pred, 1)
-                n_val_sample += 1
             end
-            val_loss /= n_val_sample
         else
-            val_loss = 0.0
+            current_metric = 0.0
         end
 
-        @info "epoch=$epoch: train_loss=$train_loss, val_loss=$val_loss"
+        @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$best_val_metric, best_epoch=$best_epoch"
     end
 
 end
