@@ -41,8 +41,13 @@ end
 @testset "Compute similarity matrix" begin
     X = sparse([1, 1, 2, 2], [1, 2, 1, 2], [1.0, 2.0, 2.0, 1.0])
     expected = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
-    evaluated = compute_similarity(X, 1, 0.0, true)
+    evaluated = compute_similarity(X, 1, 0.0, true, false)
     @test evaluated ≈ expected
+
+    evaluated = compute_similarity(X, 1, 0.0, true, true)
+    for c in eachcol(evaluated)
+        @test sum(c) ≈ 1
+    end
 end
 
 @testset "Predict user to item" begin
@@ -50,7 +55,7 @@ end
     similarity = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
     user_history = sparse([1, 0])
     @test predict_u2i(similarity, user_history, 1) == [2]
-    @test predict_u2i(similarity, user_history, 2) == [2, 1]
+    @test predict_u2i(similarity, user_history, 2) == [2] # score=0 なので一個しか返らない
     @test predict_u2i(similarity, user_history, 1, drop_history = true) == [2]
     @test predict_u2i(similarity, user_history, 2, drop_history = true) == [2]
     # check dispatch
