@@ -172,7 +172,7 @@ function fit!(
             current_metric = 0.0
         end
 
-        if verbose >= 1 && div(epoch, verbose) == 0
+        if verbose >= 1 && (epoch % verbose == 0)
             @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$best_val_metric, best_epoch=$best_epoch"
         end
     end
