@@ -26,7 +26,7 @@ function predict_u2i(
     kwargs...,
 )
     pred = model.df_popular[!, model.col_item]
-    if drop_history
+    if drop_history && (userid in keys(model.user_histories))
         pred = filter(p -> !(p in model.user_histories[userid]), pred)
     end
     n = min(n, length(pred))
