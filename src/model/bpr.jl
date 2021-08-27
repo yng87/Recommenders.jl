@@ -78,7 +78,6 @@ function fit!(
     user_column = Tables.getcolumn(table, col_user)
     item_column = Tables.getcolumn(table, col_item)
     pos_inter_idx = 1:length(user_column)
-    @show pos_inter_idx
 
     # initial loss
     pred = predict(model, 1, 1, 2)
