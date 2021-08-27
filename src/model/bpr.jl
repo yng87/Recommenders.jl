@@ -1,12 +1,8 @@
-mutable struct ImplicitMF <: AbstractRecommender
+mutable struct BPR <: AbstractRecommender
     dim::Int64
     loss::LossFunction
-    use_bias::Bool
     reg_coeff::Float64
 
-    μ::Union{Nothing,Float64}
-    user_bias::Union{Nothing,Vector{Float64}}
-    item_bias::Union{Nothing,Vector{Float64}}
     user_embedding::Union{Nothing,Matrix{Float64}}
     item_embedding::Union{Nothing,Matrix{Float64}}
 
@@ -15,14 +11,10 @@ mutable struct ImplicitMF <: AbstractRecommender
     iidx2item::Union{Dict,Nothing}
     user_history::Union{Dict,Nothing}
 
-    ImplicitMF(dim::Int64, use_bias::Bool, reg_coeff::Float64) = new(
+    BPR(dim::Int64, reg_coeff::Float64) = new(
         dim,
-        Logloss(), # default
-        use_bias,
+        BPRLoss(), # default
         reg_coeff,
-        nothing,
-        nothing,
-        nothing,
         nothing,
         nothing,
         nothing,
@@ -32,35 +24,31 @@ mutable struct ImplicitMF <: AbstractRecommender
     )
 end
 
+function predict(model::BPR, uidx, iidx)::Float64
+    return model.user_embedding[:, uidx]' * model.item_embedding[:, iidx]
+end
 
-
-function predict(model::ImplicitMF, uidx, iidx)::Float64
-    pred = model.user_embedding[:, uidx]' * model.item_embedding[:, iidx]
-    if model.use_bias
-        pred += model.μ + model.user_bias[uidx] + model.item_bias[iidx]
-    end
-    return pred
+function predict(model::BPR, uidx, iidx, jidx)::Float64
+    return predict(model, uidx, iidx) - predict(model, uidx, jidx)
 end
 
 
-function sgd!(model::ImplicitMF, uidx, iidx, grad_value, lr)
+function sgd!(model::BPR, uidx, iidx, jidx, grad_value, lr)
     reg = model.reg_coeff
 
-    if model.use_bias
-        model.user_bias[uidx] -= lr * (grad_value + reg * model.user_bias[uidx])
-        model.item_bias[iidx] -= lr * (grad_value + reg * model.item_bias[iidx])
-        model.μ -= lr * (grad_value + reg * model.μ)
-    end
     uvec = @view model.user_embedding[:, uidx]
     ivec = @view model.item_embedding[:, iidx]
-    model.user_embedding[:, uidx] -= lr * (grad_value * ivec + reg * uvec)
+    jvec = @view model.item_embedding[:, jidx]
+
+    model.user_embedding[:, uidx] -= lr * (grad_value * (ivec - jvec) + reg * uvec)
     model.item_embedding[:, iidx] -= lr * (grad_value * uvec + reg * ivec)
+    model.item_embedding[:, jidx] -= lr * (grad_value * (-uvec) + reg * ivec)
 end
 
 
 
 function fit!(
-    model::ImplicitMF,
+    model::BPR,
     table;
     valid_table = nothing,
     valid_metric = nothing,
@@ -68,7 +56,6 @@ function fit!(
     col_item = :item_id,
     n_epochs = 2,
     learning_rate = 0.01,
-    n_negatives = 1,
     early_stopping_rounds = -1,
     verbose = -1,
     kwargs...,
@@ -91,13 +78,6 @@ function fit!(
     model.user_embedding = rand(model.dim, n_user)
     model.item_embedding = rand(model.dim, n_item)
 
-    if model.use_bias
-        model.user_bias = rand(n_user)
-        model.item_bias = rand(n_item)
-        model.μ = rand()
-    end
-
-
     best_epoch = 1
     best_val_metric = 0.0
     if !(valid_table === nothing)
@@ -113,49 +93,26 @@ function fit!(
         n_sample = 0
         for row in Tables.rows(table)
             uidx = row[col_user]
-
-            # update positive
             iidx = row[col_item]
 
-            pred = predict(model, uidx, iidx)
-            train_loss = (model.loss(pred, 1) + train_loss * n_sample) / (n_sample + 1)
+            # sample negative
+            jidx = -1
+            while true
+                jidx = rand(unique_items)
+                if jidx != iidx
+                    break
+                end
+            end
+
+            pred = predict(model, uidx, iidx, jidx)
+            train_loss = (model.loss(pred) + train_loss * n_sample) / (n_sample + 1)
             n_sample += 1
 
-            grad_value = grad(model.loss, pred, 1)
-            sgd!(model, uidx, iidx, grad_value, learning_rate)
-
-            # negative samples
-            for _ = 1:n_negatives
-                iidx = rand(unique_items)
-
-                pred = predict(model, uidx, iidx)
-                train_loss = (model.loss(pred, 0) + train_loss * n_sample) / (n_sample + 1)
-                n_sample += 1
-
-                grad_value = grad(model.loss, pred, 0)
-                sgd!(model, uidx, iidx, grad_value, learning_rate)
-            end
+            grad_value = grad(model.loss, pred)
+            sgd!(model, uidx, iidx, jidx, grad_value, learning_rate)
         end
 
         if !(valid_table === nothing)
-            # val_loss = 0.0
-            # n_val_sample = 0
-            # for row in Tables.rows(valid_table)
-            #     user = row[col_user]
-            #     item = row[col_item]
-            #     if !(user in keys(model.user2uidx))
-            #         continue
-            #     end
-            #     if !(item in keys(model.item2iidx))
-            #         continue
-            #     end
-            #     uidx = model.user2uidx[user]
-            #     iidx = model.item2iidx[item]
-            #     pred = predict(model, uidx, iidx)
-            #     val_loss += model.loss(pred, 1)
-            #     n_val_sample += 1
-            # end
-            # val_loss /= n_val_sample
             recoms = predict_u2i(model, val_xs, valid_n, drop_history = true)
             current_metric = valid_metric(recoms, val_ys)
 
@@ -180,7 +137,7 @@ function fit!(
 end
 
 function predict_u2i(
-    model::ImplicitMF,
+    model::BPR,
     userid::Union{AbstractString,Int},
     n::Int64;
     drop_history = false,
