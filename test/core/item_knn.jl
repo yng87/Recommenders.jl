@@ -1,5 +1,5 @@
 using Test, SparseArrays
-using Recommender: tfidf, bm25, compute_similarity, predict_u2i
+using Recommenders: tfidf, bm25, compute_similarity, predict_u2i
 
 @testset "TF-IDF" begin
     inter = sparse([1, 1, 1, 2], [1, 2, 3, 3], [1.0, 3.0, 5.0, 2.0])

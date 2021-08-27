@@ -1,5 +1,5 @@
 using Tables
-using Recommender: Movielens1M, Movielens100k, download, load_dataset
+using Recommenders: Movielens1M, Movielens100k, download, load_dataset
 using Test
 
 @testset "Movielens100k" begin

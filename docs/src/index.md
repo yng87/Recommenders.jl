@@ -1,12 +1,12 @@
 ```@meta
-CurrentModule = Recommender
+CurrentModule = Recommenders
 ```
 
-# Recommender
+# Recommenders
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [Recommender]
+Modules = [Recommenders]
 ```

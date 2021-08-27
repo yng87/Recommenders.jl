@@ -1,5 +1,5 @@
 using Test
-using Recommender: σ, Logloss, grad
+using Recommenders: σ, Logloss, grad
 
 @testset "Sigmoid." begin
     @test σ(0.0) == 0.5

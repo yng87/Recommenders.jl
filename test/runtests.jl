@@ -1,4 +1,4 @@
-using Recommender
+using Recommenders
 using Test, Documenter
 
 
