@@ -1,5 +1,6 @@
 using Test
-using Recommender: Recall, Precision, DCG, NDCG, MeanRecall, MeanPrecision
+using Recommender:
+    Recall, Precision, DCG, NDCG, MeanRecall, MeanPrecision, MeanDCG, MeanNDCG, _dcg
 
 @testset "Recall and precision" begin
     recall1 = Recall(1)
@@ -41,27 +42,28 @@ using Recommender: Recall, Precision, DCG, NDCG, MeanRecall, MeanPrecision
 end
 
 @testset "DCG" begin
-    dcg1 = DCG(1)
-    dcg2 = DCG(2)
+    @test _dcg([1]) ≈ 1.0
+    relevances = [1.0, 0.0, 3.0]
+    @test _dcg(relevances) ≈ 1 + 3.5
+
     dcg3 = DCG(3)
+    @test dcg3([1], [1]) ≈ 1.0
+    @test dcg3([1, 2, 3], [1, 2, 3], [1.0, 0.0, 3.0]) ≈ 4.5
+    @test dcg3([1, 2, 3, 4], [1, 2, 3, 4], [1.0, 0.0, 3.0]) ≈ 4.5
+    @test dcg3([1, 4, 2], [1, 2, 3], [1.0, 3.0, 5.0]) ≈ 4.5
+    @test dcg3([1, 4, 2], [1, 2, 3], [1.0, 7.0, 5.0]) ≈ 1 + 127 / 2.0
+
+    ndcg3 = NDCG(3)
+    @test ndcg3([1], [1]) ≈ 1.0
+    @test ndcg3([1, 2, 3], [1, 2, 3], [1, 1, 1]) ≈ 1.0
+    @test ndcg3([1, 2, 3], [1, 2], [1, 1]) ≈ 1.0
+    @test ndcg3([1, 2, 3], [2, 1], [1, 1]) ≈ 1.0
+    @test ndcg3([1, 2, 3], [1, 2, 3, 4]) ≈ 1.0
+    @test ndcg3([6, 7, 8], [1, 2, 3, 4]) ≈ 0.0
+
+    mean_dcg3 = MeanDCG(3)
+    @test mean_dcg3([[1], [1, 2, 3]], [[1], [1]]) ≈ 1.0
+
+    mean_ndcg3 = MeanNDCG(3)
+    @test mean_ndcg3([[1, 2, 3], [6, 7, 8]], [[1, 2, 3], [1]]) ≈ 0.5
 end
-
-# @testset "NDCG" begin
-#     ndcg3 = NDCG(3)
-#     preds = [[1, 2, 4]]
-#     @test ndcg3(preds, [[1]]) == 1.0
-#     @test ndcg3(preds, [[2]]) == 1.0 / log2(1.0 + 2)
-#     @test ndcg3(preds, [[4]]) == 1.0 / log2(1.0 + 3)
-#     @test ndcg3(preds, [[1, 2]]) == 1.0
-#     @test ndcg3(preds, [[1, 4]]) ==
-#           (1.0 + 1.0 / log2(1.0 + 3)) / (1.0 + 1.0 / log2(1.0 + 2))
-
-#     ndcg2 = NDCG(2)
-#     preds = [[1, 2, 4], [5, 7, 9]]
-#     gts = [[1, 4], [7]]
-#     @test ndcg2(preds, gts) == (1.0 / (1.0 + 1.0 / log2(1.0 + 2)) + 1.0 / log2(1.0 + 2)) / 2
-#     @test ndcg3(preds, gts) ==
-#           (
-#         (1.0 + 1.0 / log2(1.0 + 3)) / (1.0 + 1.0 / log2(1.0 + 2)) + 1.0 / log2(1.0 + 2)
-#     ) / 2
-# end

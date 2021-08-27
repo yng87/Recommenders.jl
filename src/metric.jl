@@ -1,11 +1,14 @@
 abstract type AbstractMetric end
 
-abstract type SingleListMetric <: AbstractMetric end
+abstract type SingleRecommendMetric <: AbstractMetric end
 
-abstract type TopKMetric <: SingleListMetric end
+abstract type TopKMetric <: SingleRecommendMetric end
 
 struct Recall <: TopKMetric
     k::Int
+    name::AbstractString
+
+    Recall(k::Int) = new(k, "recall")
 end
 
 function (recall::Recall)(recommend_list, ground_truth)
@@ -21,6 +24,9 @@ end
 
 struct Precision <: TopKMetric
     k::Int
+    name::AbstractString
+
+    Precision(k::Int) = new(k, "precision")
 end
 
 function (precision::Precision)(recommend_list, ground_truth)
@@ -37,14 +43,16 @@ end
 function _dcg(relevances)
     result = 0.0
     for i in eachindex(relevances)
-        # result += (2^relevances[i] - 1) / log2(1.0 + i)
-        result += (relevances[i]) / log2(1.0 + i)
+        result += (2^relevances[i] - 1) / log2(1.0 + i)
     end
     return result
 end
 
 struct DCG <: TopKMetric
     k::Int
+    name::AbstractString
+
+    DCG(k::Int) = new(k, "dcg")
 end
 
 function (dcg::DCG)(recommend_list, ground_truth, true_relevance = nothing)
@@ -71,6 +79,9 @@ end
 
 struct NDCG <: TopKMetric
     k::Int
+    name::AbstractString
+
+    NDCG(k::Int) = new(k, "ndcg")
 end
 
 function (ndcg::NDCG)(recommend_list, ground_truth, true_relevance = nothing)
@@ -94,13 +105,19 @@ function (ndcg::NDCG)(recommend_list, ground_truth, true_relevance = nothing)
     end
     dcg = _dcg(relevances)
 
+    # Note: Table 3 of [Dacrema, Cremonesi and Jannach, 2019]("Are we really...")
+    # probably adopts n = length(true_relevance) for IDCG.
+    # I believe it is not suitable and use instead the definition below
+    # This formulation is seen, for instance, in
+    # [Rendle 2021]("Item Recommendation from Implicit Feedback")
     n = min(length(ground_truth), k)
     idcg = _dcg(sort(true_relevance, rev = true)[1:n])
 
     return dcg / idcg
 end
 
-struct MeanMetric{T<:SingleListMetric} <: AbstractMetric
+#only for implicit recommendation
+struct MeanMetric{T<:SingleRecommendMetric} <: AbstractMetric
     base_metric::T
 end
 
@@ -117,70 +134,6 @@ MeanPrecision(k) = MeanMetric(Precision(k))
 MeanDCG(k) = MeanMetric(DCG(k))
 MeanNDCG(k) = MeanMetric(NDCG(k))
 
-# old
-# struct RecallAtK <: AbstractMetric
-#     k::Int64
-# end
+get_k(metric::MeanMetric) = metric.base_metric.k
+get_name(metric::MeanMetric) = metric.base_metric.name
 
-# function (recall::RecallAtK)(recommends, ys)
-#     rec = 0
-#     for (pred, gt) in zip(recommends, ys)
-#         if pred === nothing || length(pred) == 0
-#             continue
-#         end
-#         k = min(recall.k, length(pred))
-#         pred = pred[1:k]
-#         num_hits = length(intersect(pred, gt))
-#         rec += num_hits / length(gt)
-#     end
-#     return rec / length(ys)
-# end
-
-# struct PrecisionAtK <: AbstractMetric
-#     k::Int64
-# end
-
-# function (precision::PrecisionAtK)(recommends, ys)
-#     prec = 0
-#     for (pred, gt) in zip(recommends, ys)
-#         if pred === nothing || length(pred) == 0
-#             continue
-#         end
-#         k = min(precision.k, length(pred))
-#         pred = pred[1:k]
-#         num_hits = length(intersect(pred, gt))
-#         prec += num_hits / length(pred)
-#     end
-#     return prec / length(ys)
-# end
-
-
-# struct NDCG <: AbstractMetric
-#     k::Int64
-# end
-
-# function (precision::NDCG)(recommends, ys)
-#     ndcg = 0
-#     for (pred, gt) in zip(recommends, ys)
-#         if pred === nothing || length(pred) == 0
-#             continue
-#         end
-#         k = min(precision.k, length(pred))
-#         pred = pred[1:k]
-
-#         dcg = 0
-#         for i in eachindex(pred)
-#             if pred[i] in gt
-#                 dcg += 1.0 / log2(1.0 + i)
-#             end
-#         end
-
-#         idcg = 0
-#         for i = 1:min(length(pred), length(gt))
-#             idcg += 1.0 / log2(1.0 + i)
-#         end
-
-#         ndcg += dcg / idcg
-#     end
-#     return ndcg / length(ys)
-# end

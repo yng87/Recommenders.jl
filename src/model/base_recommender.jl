@@ -26,7 +26,7 @@ function evaluate_u2i(
     model::AbstractRecommender,
     train_table,
     test_table,
-    metric::AbstractMetric,
+    metric::MeanMetric,
     n::Int64;
     kwargs...,
 )
@@ -43,7 +43,7 @@ function evaluate_u2i(
     model::AbstractRecommender,
     train_table,
     test_table,
-    metrics::Union{Vector{<:AbstractMetric},Tuple{<:AbstractMetric}},
+    metrics::Union{Vector{<:MeanMetric},Tuple{<:MeanMetric}},
     n::Int64;
     kwargs...,
 )
@@ -55,7 +55,7 @@ function evaluate_u2i(
 
     result = Dict()
     for metric in metrics
-        result[Symbol(metric)] = metric(recoms, gts)
+        result[get_name(metric)] = metric(recoms, gts)
     end
     return NamedTuple(result)
 end
