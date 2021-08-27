@@ -34,7 +34,7 @@ function main()
 
     function invert_output(params)
         @info params
-        tolerance = convert(Int, params[:tolerance])
+        tolerance = params[:tolerance]
         learning_rate = params[:learning_rate]
         dimension = convert(Int, 2^params[:log2_dimension])
         reg_coeff = params[:reg_coeff]
@@ -71,7 +71,7 @@ function main()
         metrics,
         10,
         col_item = :movieid,
-        tolerance = convert(Int, best[:tolerance]),
+        tolerance = best[:tolerance],
         learning_rate = best[:learning_rate],
         drop_history = true,
         early_stopping_rounds = -1,
