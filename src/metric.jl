@@ -123,7 +123,7 @@ end
 
 function (metric::MeanMetric)(recommend_lists, ground_truth_list)
     result = 0.0
-    for (recom, gt) in zip(recommend_lists, ground_truth_list)
+    Threads.@threads for (recom, gt) in zip(recommend_lists, ground_truth_list)
         result += metric.base_metric(recom, gt)
     end
     return result / length(recommend_lists)
