@@ -55,7 +55,7 @@ function evaluate_u2i(
 
     result = Dict()
     for metric in metrics
-        result[Symbol(get_name(metric))] = metric(recoms, gts)
+        result[Symbol(name(metric))] = metric(recoms, gts)
     end
     return NamedTuple(result)
 end

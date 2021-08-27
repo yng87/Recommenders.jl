@@ -134,6 +134,5 @@ MeanPrecision(k) = MeanMetric(Precision(k))
 MeanDCG(k) = MeanMetric(DCG(k))
 MeanNDCG(k) = MeanMetric(NDCG(k))
 
-get_k(metric::MeanMetric) = metric.base_metric.k
-get_name(metric::MeanMetric) = metric.base_metric.name
+name(metric::MeanMetric) = "$(metric.base_metric.name)$(metric.base_metric.k)"
 
