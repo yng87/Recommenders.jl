@@ -22,6 +22,7 @@ CSV = "0.8"
 DataFrames = "0.22"
 HTTP = "0.9"
 Parameters = "0.12"
+TreeParzen = "0.2"
 ZipFile = "0.9"
 julia = "1"
 
