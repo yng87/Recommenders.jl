@@ -26,7 +26,7 @@ function main()
 
     space = Dict(
         # :n_epochs => HP.Choice(:n_epochs, [1, 2]),
-        :n_epochs => HP.Choice(:n_epochs, [32, 64, 128, 256]),
+        :tolerance => HP.LogUniform(:tolerance, log(1e-12), log(1e-6)),
         :learning_rate => HP.LogUniform(:learning_rate, log(1e-3), log(1.0)),
         :log2_dimension => HP.QuantUniform(:log2_dimension, 4.0, 9.0, 1.0),
         :reg_coeff => HP.LogUniform(:reg_coeff, log(1e-3), log(1.0)),
@@ -34,7 +34,7 @@ function main()
 
     function invert_output(params)
         @info params
-        n_epochs = convert(Int, params[:n_epochs])
+        tolerance = convert(Int, params[:tolerance])
         learning_rate = params[:learning_rate]
         dimension = convert(Int, 2^params[:log2_dimension])
         reg_coeff = params[:reg_coeff]
@@ -48,7 +48,7 @@ function main()
             metrics,
             10,
             col_item = :movieid,
-            n_epochs = n_epochs,
+            tolerance = tolerance,
             learning_rate = learning_rate,
             drop_history = true,
             early_stopping_rounds = -1,
@@ -58,7 +58,7 @@ function main()
     end
 
     @info "Tuning start."
-    best = fmin(invert_output, space, 20, logging_interval = -1)
+    best = fmin(invert_output, space, 100, logging_interval = -1)
     @info best
 
     @info "Evaluate best model."
@@ -71,7 +71,7 @@ function main()
         metrics,
         10,
         col_item = :movieid,
-        n_epochs = convert(Int, best[:n_epochs]),
+        tolerance = convert(Int, best[:tolerance]),
         learning_rate = best[:learning_rate],
         drop_history = true,
         early_stopping_rounds = -1,
