@@ -18,3 +18,13 @@ end
 function grad(loss::Logloss, logit, label)
     return σ(logit) - label
 end
+
+struct BPRLoss <: LossFunction end
+
+function (loss::BPRLoss)(pred)
+    return -log(σ(pred))
+end
+
+function grad(loss::BPRLoss, pred)
+    return -1 + σ(pred)
+end
