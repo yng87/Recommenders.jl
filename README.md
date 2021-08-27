@@ -1,4 +1,8 @@
-# Recommenderss.jl
+# Recommenders.jl
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommenders.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommenders.jl/dev)
+[![Build Status](https://github.com/yng87/Recommenders.jl/workflows/CI/badge.svg)](https://github.com/yng87/Recommenders.jl/actions)
+
 [WIP]
 Collection of datasets and algorithms for Recommenders systems...
 
@@ -25,7 +29,3 @@ Collection of datasets and algorithms for Recommenders systems...
 | ItemkNN | 0.3311 | 0.1489 | 0.3734 | [Item-based top-<i>N</i> recommendation algorithms](https://doi.org/10.1145/963770.963776) |
 | Implicit matrix factorization | | | | [Neural Collaborative Filtering vs. Matrix Factorization Revisited](http://arxiv.org/abs/2005.09683) |
 | BPR | | | | [BPR: Bayesian Personalized Ranking from Implicit Feedback](http://arxiv.org/abs/1205.2618)
-
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommenders.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommenders.jl/dev)
-[![Build Status](https://github.com/yng87/Recommenders.jl/workflows/CI/badge.svg)](https://github.com/yng87/Recommenders.jl/actions)
