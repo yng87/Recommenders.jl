@@ -101,7 +101,7 @@ function fit!(
     best_epoch = 1
     best_val_metric = 0.0
     if !(valid_table === nothing)
-        valid_n = valid_metric.k
+        valid_n = valid_metric.base_metric.k
         val_xs, val_ys =
             make_u2i_dataset(valid_table, col_user = col_user, col_item = col_item)
         recoms = predict_u2i(model, val_xs, valid_n, drop_history = true)
