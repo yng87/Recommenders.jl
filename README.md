@@ -1,6 +1,6 @@
-# Recommenders.jl
+# Recommenderss.jl
 [WIP]
-Collection of datasets and algorithms for recommender systems...
+Collection of datasets and algorithms for Recommenders systems...
 
 - Consistent interface for fit, predict and evaluate.
 - Accepts Tables.jl - compatible data.
@@ -26,6 +26,6 @@ Collection of datasets and algorithms for recommender systems...
 | Implicit matrix factorization | | | | [Neural Collaborative Filtering vs. Matrix Factorization Revisited](http://arxiv.org/abs/2005.09683) |
 | BPR | | | | [BPR: Bayesian Personalized Ranking from Implicit Feedback](http://arxiv.org/abs/1205.2618)
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommender.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommender.jl/dev)
-[![Build Status](https://github.com/yng87/Recommender.jl/workflows/CI/badge.svg)](https://github.com/yng87/Recommender.jl/actions)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommenders.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommenders.jl/dev)
+[![Build Status](https://github.com/yng87/Recommenders.jl/workflows/CI/badge.svg)](https://github.com/yng87/Recommenders.jl/actions)

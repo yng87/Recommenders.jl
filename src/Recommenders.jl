@@ -1,4 +1,4 @@
-module Recommender
+module Recommenders
 
 
 using HTTP,

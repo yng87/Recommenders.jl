@@ -1,6 +1,6 @@
 using DataFrames, TableOperations, Tables, Random
 using TreeParzen
-using Recommender:
+using Recommenders:
     Movielens1M,
     load_dataset,
     ratio_split,

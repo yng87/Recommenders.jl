@@ -1,5 +1,5 @@
 using CSV, SparseArrays, DataFrames
-using Recommender: rows2sparse, reindex_id_column, make_u2i_dataset
+using Recommenders: rows2sparse, reindex_id_column, make_u2i_dataset
 using Test
 
 @testset "CSV to sparse matrix" begin

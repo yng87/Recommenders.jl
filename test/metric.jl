@@ -1,5 +1,5 @@
 using Test
-using Recommender:
+using Recommenders:
     Recall, Precision, DCG, NDCG, MeanRecall, MeanPrecision, MeanDCG, MeanNDCG, _dcg
 
 @testset "Recall and precision" begin

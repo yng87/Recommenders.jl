@@ -1,5 +1,5 @@
 using DataFrames
-using Recommender: leave_one_out_split, ratio_split
+using Recommenders: leave_one_out_split, ratio_split
 using Test
 
 @testset "Leave one out split by timestamp" begin
