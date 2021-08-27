@@ -59,7 +59,7 @@ function main()
             early_stopping_rounds = -1,
         )
         @info result
-        return -result[:ndcg]
+        return -result[:ndcg10]
     end
 
     @info "Tuning start."
