@@ -58,7 +58,7 @@ function main()
     end
 
     @info "Tuning start."
-    best = fmin(invert_output, space, 100, logging_interval = -1)
+    best = fmin(invert_output, space, 20, logging_interval = -1)
     @info best
 
     @info "Evaluate best model."
