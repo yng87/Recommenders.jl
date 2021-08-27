@@ -2,6 +2,9 @@
 [WIP]
 Collection of datasets and algorithms for recommender systems...
 
+- Consistent interface for fit, predict and evaluate.
+- Accepts Tables.jl - compatible data.
+
 # Movielens 100k
 ## Random 80/20 split.
 
