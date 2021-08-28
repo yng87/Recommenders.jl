@@ -55,6 +55,7 @@ function fit!(
     col_user = :userid,
     col_item = :item_id,
     n_epochs = 2,
+    n_negatives = 1,
     learning_rate = 0.01,
     early_stopping_rounds = -1,
     verbose = -1,
@@ -96,20 +97,19 @@ function fit!(
             iidx = row[col_item]
 
             # sample negative
-            jidx = -1
-            while true
+            for _ = 1:n_negatives
                 jidx = rand(unique_items)
-                if jidx != iidx
-                    break
+                while jidx in model.user_history[uidx]
+                    jidx = rand(unique_items)
                 end
+
+                pred = predict(model, uidx, iidx, jidx)
+                train_loss = (model.loss(pred) + train_loss * n_sample) / (n_sample + 1)
+                n_sample += 1
+
+                grad_value = grad(model.loss, pred)
+                sgd!(model, uidx, iidx, jidx, grad_value, learning_rate)
             end
-
-            pred = predict(model, uidx, iidx, jidx)
-            train_loss = (model.loss(pred) + train_loss * n_sample) / (n_sample + 1)
-            n_sample += 1
-
-            grad_value = grad(model.loss, pred)
-            sgd!(model, uidx, iidx, jidx, grad_value, learning_rate)
         end
 
         if !(valid_table === nothing)
