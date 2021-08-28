@@ -27,7 +27,7 @@ function main()
     space = Dict(
         # :n_epochs => HP.Choice(:n_epochs, [1, 2]),
         :n_epochs => HP.Choice(:n_epochs, [32, 64, 128, 256]),
-        :n_negatives => HP.QuantUniform(:n_negatives, 1.0, 16.0, 1),
+        :n_negatives => HP.QuantUniform(:n_negatives, 1.0, 16.0, 1.),
         :learning_rate => HP.LogUniform(:learning_rate, log(1e-4), log(1e-1)),
         :log2_dimension => HP.QuantUniform(:log2_dimension, 4.0, 9.0, 1.0),
         :reg_coeff => HP.LogUniform(:reg_coeff, log(1e-3), log(1.0)),
