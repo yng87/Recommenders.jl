@@ -26,17 +26,15 @@ function main()
 
     space = Dict(
         # :n_epochs => HP.Choice(:n_epochs, [1, 2]),
-        :tolerance => HP.LogUniform(:tolerance, log(1e-13), log(1e-10)),
-        :learning_rate => HP.LogUniform(:learning_rate, log(1e-3), log(1.0)),
-        :log2_dimension => HP.QuantUniform(:log2_dimension, 4.0, 9.0, 1.0),
-        :reg_coeff => HP.LogUniform(:reg_coeff, log(1e-3), log(1.0)),
+        :learning_rate => HP.LogUniform(:learning_rate, log(1e-4), log(1e-1)),
+        :dimension => HP.QuantUniform(:dimension, 16., 128., 2.),
+        :reg_coeff => HP.LogUniform(:reg_coeff, log(1e-9), log(1e-1)),
     )
 
     function invert_output(params)
         @info params
-        tolerance = params[:tolerance]
         learning_rate = params[:learning_rate]
-        dimension = convert(Int, 2^params[:log2_dimension])
+        dimension = convert(Int, params[:dimension])
         reg_coeff = params[:reg_coeff]
 
         model = BPR(dimension, reg_coeff)
@@ -47,11 +45,15 @@ function main()
             valid_table,
             metrics,
             10,
+            valid_table=valid_table,
+            valid_metric=ndcg10,
             col_item = :movieid,
-            tolerance = tolerance,
+            n_epochs = 1000,
+            steps_in_epoch = 60000,
+            early_stopping_rounds = 50,
             learning_rate = learning_rate,
             drop_history = true,
-            early_stopping_rounds = -1,
+            verbose=-1,
         )
         @info result
         return -result[:ndcg10]
@@ -61,22 +63,22 @@ function main()
     best = fmin(invert_output, space, 100, logging_interval = -1)
     @info best
 
-    @info "Evaluate best model."
+    # @info "Evaluate best model."
 
-    best_model = BPR(convert(Int, 2^best[:log2_dimension]), best[:reg_coeff])
-    result = evaluate_u2i(
-        best_model,
-        train_valid_table,
-        test_table,
-        metrics,
-        10,
-        col_item = :movieid,
-        tolerance = best[:tolerance],
-        learning_rate = best[:learning_rate],
-        drop_history = true,
-        early_stopping_rounds = -1,
-    )
-    @info result
+    # best_model = BPR(convert(Int, best[:dimension]), best[:reg_coeff])
+    # result = evaluate_u2i(
+    #     best_model,
+    #     train_valid_table,
+    #     test_table,
+    #     metrics,
+    #     10,
+    #     col_item = :movieid,
+    #     tolerance = best[:tolerance],
+    #     learning_rate = best[:learning_rate],
+    #     drop_history = true,
+    #     early_stopping_rounds = -1,
+    # )
+    # @info result
 
 end
 

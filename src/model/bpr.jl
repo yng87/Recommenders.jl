@@ -138,6 +138,7 @@ function fit!(
             @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$best_val_metric, best_epoch=$best_epoch"
         end
     end
+    @info "best_epoch=$best_epoch"
 end
 
 function predict_u2i(
