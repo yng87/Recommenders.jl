@@ -50,10 +50,14 @@ end
 function fit!(
     model::BPR,
     table;
+    valid_table = nothing,
+    valid_metric = nothing,
     col_user = :userid,
     col_item = :item_id,
     learning_rate = 0.01,
-    tolerance = 1e-3,
+    n_epochs = 2,
+    steps_in_epoch = 100,
+    early_stopping_rounds = -1,
     verbose = -1,
     kwargs...,
 )
@@ -79,36 +83,59 @@ function fit!(
     item_column = Tables.getcolumn(table, col_item)
     pos_inter_idx = 1:length(user_column)
 
-    # initial loss
-    pred = predict(model, 1, 1, 2)
-    train_loss = model.loss(pred)
-    n_sample = 1
-    rel_delta = 1e20
+    best_epoch = 1
+    best_val_metric = 0.0
+    if !(valid_table === nothing)
+        valid_n = valid_metric.base_metric.k
+        val_xs, val_ys =
+            make_u2i_dataset(valid_table, col_user = col_user, col_item = col_item)
+        recoms = predict_u2i(model, val_xs, valid_n, drop_history = true)
+        best_val_metric = valid_metric(recoms, val_ys)
+    end
 
     # LearnBPR
-    while rel_delta > tolerance
-        i = rand(pos_inter_idx)
-        uidx = user_column[i]
-        iidx = item_column[i]
+    train_loss = 0
+    n_sample = 0
+    for epoch = 1:n_epochs
+        for _ = 1:steps_in_epoch
+            # boostrap sampling
+            i = rand(pos_inter_idx)
+            uidx = user_column[i]
+            iidx = item_column[i]
 
-        jidx = rand(unique_items)
-        while jidx in model.user_history[uidx]
             jidx = rand(unique_items)
+            while jidx in model.user_history[uidx]
+                jidx = rand(unique_items)
+            end
+
+            # forward and backward
+            pred = predict(model, uidx, iidx, jidx)
+            train_loss = (model.loss(pred) + train_loss * n_sample) / (n_sample + 1)
+            n_sample += 1
+
+            grad_value = grad(model.loss, pred)
+            sgd!(model, uidx, iidx, jidx, grad_value, learning_rate)
         end
 
-        pred = predict(model, uidx, iidx, jidx)
-        grad_value = grad(model.loss, pred)
-        sgd!(model, uidx, iidx, jidx, grad_value, learning_rate)
+        if !(valid_table === nothing)
+            recoms = predict_u2i(model, val_xs, valid_n, drop_history = true)
+            current_metric = valid_metric(recoms, val_ys)
 
-        n_sample += 1
-        pred = predict(model, uidx, iidx, jidx)
-        delta = (model.loss(pred) - train_loss) / n_sample
-        train_loss += delta
+            if early_stopping_rounds >= 1
+                if current_metric > best_val_metric
+                    best_epoch = epoch
+                    best_val_metric = current_metric
+                end
+                if (epoch - best_epoch) >= early_stopping_rounds
+                    break
+                end
+            end
+        else
+            current_metric = 0.0
+        end
 
-        rel_delta = abs(delta) / train_loss
-
-        if verbose >= 1 && (n_sample % verbose == 0)
-            @info "n_sample=$n_sample: train_loss=$train_loss, delta=$delta, cond=$(abs(delta) > tolerance)"
+        if verbose >= 1 && (epoch % verbose == 0)
+            @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$best_val_metric, best_epoch=$best_epoch"
         end
     end
 end
