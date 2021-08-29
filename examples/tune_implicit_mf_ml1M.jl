@@ -129,7 +129,7 @@ function search(filepath)
         ),
     )
 
-    best = fmin(invert_output, space, 2, logging_interval = -1)
+    best = fmin(invert_output, space, 20, logging_interval = -1)
     @info best
 
     @info "Evaluate best model."
