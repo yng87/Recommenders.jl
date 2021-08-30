@@ -67,9 +67,8 @@ function fit!(
         model.user_history[userid] = history
     end
 
-    table, model.user2uidx = reindex_id_column(table, col_user)
-    table, model.item2iidx = reindex_id_column(table, col_item)
-    model.iidx2item = Dict(iidx => itemid for (itemid, iidx) in model.item2iidx)
+    table, model.user2uidx, model.item2iidx, model.iidx2item =
+        make_idmap(table, col_user = col_user, col_item = col_item)
 
     n_user = length(keys(model.user2uidx))
 

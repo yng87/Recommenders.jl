@@ -1,4 +1,4 @@
-function prepare_idmap!(table; col_user = :userid, col_item = :itemid)
+function make_idmap(table; col_user = :userid, col_item = :itemid)
     table, user2uidx = reindex_id_column(table, col_user)
     table, item2iidx = reindex_id_column(table, col_item)
     iidx2item = Dict(iidx => itemid for (itemid, iidx) in item2iidx)
