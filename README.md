@@ -16,8 +16,8 @@ Collection of datasets and algorithms for Recommenders systems...
 |-------| -------------| ----------| ------- | ---- |
 | Most popular | 0.1897 | 0.1182 | 0.2197 ||
 | ItemkNN | 0.3284 | 0.2180 | 0.3986| [Item-based top-<i>N</i> recommendation algorithms](https://doi.org/10.1145/963770.963776) |
-| Implicit matrix factorization | 0.3657 | 0.2416 | 0.4402 | [Neural Collaborative Filtering vs. Matrix Factorization Revisited](http://arxiv.org/abs/2005.09683) |
-| BPR | 0.3421 | 0.2198 | 0.4004 | [BPR: Bayesian Personalized Ranking from Implicit Feedback](http://arxiv.org/abs/1205.2618)
+| Matrix factorization | 0.3657 | 0.2416 | 0.4402 | [Neural Collaborative Filtering vs. Matrix Factorization Revisited](http://arxiv.org/abs/2005.09683) |
+| BPR | 0.3463 | 0.2316 | 0.4083 | [BPR: Bayesian Personalized Ranking from Implicit Feedback](http://arxiv.org/abs/1205.2618)
 
 
 # Movielens 1M
@@ -27,5 +27,5 @@ Collection of datasets and algorithms for Recommenders systems...
 |-------| -------------| ----------| ------- | ---- |
 | Most popular | 0.1816 | 0.06661 | 0.2022 ||
 | ItemkNN | 0.3311 | 0.1489 | 0.3734 | [Item-based top-<i>N</i> recommendation algorithms](https://doi.org/10.1145/963770.963776) |
-| Implicit matrix factorization | | | | [Neural Collaborative Filtering vs. Matrix Factorization Revisited](http://arxiv.org/abs/2005.09683) |
+| Matrix factorization | | | | [Neural Collaborative Filtering vs. Matrix Factorization Revisited](http://arxiv.org/abs/2005.09683) |
 | BPR | | | | [BPR: Bayesian Personalized Ranking from Implicit Feedback](http://arxiv.org/abs/1205.2618)
