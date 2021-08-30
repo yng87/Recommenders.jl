@@ -4,7 +4,7 @@
 [![Build Status](https://github.com/yng87/Recommenders.jl/workflows/CI/badge.svg)](https://github.com/yng87/Recommenders.jl/actions)
 
 [WIP]
-Collection of datasets and algorithms for Recommenders systems...
+Collection of datasets and algorithms for implicit recommendation.
 
 - Consistent interface for fit, predict and evaluate.
 - Accepts Tables.jl - compatible data.
