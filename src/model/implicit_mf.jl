@@ -79,9 +79,8 @@ function fit!(
         model.user_history[userid] = history
     end
 
-    table, model.user2uidx = reindex_id_column(table, col_user)
-    table, model.item2iidx = reindex_id_column(table, col_item)
-    model.iidx2item = Dict(iidx => itemid for (itemid, iidx) in model.item2iidx)
+    table, model.user2uidx, model.item2iidx, model.iidx2item =
+        make_idmap(table, col_user = col_user, col_item = col_item)
 
     n_user = length(keys(model.user2uidx))
 
@@ -97,15 +96,16 @@ function fit!(
         model.μ = rand()
     end
 
-
-    best_epoch = 1
-    best_val_metric = 0.0
-    if !(valid_table === nothing)
-        valid_n = valid_metric.base_metric.k
-        val_xs, val_ys =
-            make_u2i_dataset(valid_table, col_user = col_user, col_item = col_item)
-        recoms = predict_u2i(model, val_xs, valid_n, drop_history = true)
-        best_val_metric = valid_metric(recoms, val_ys)
+    if !(valid_metric === nothing)
+        cb = EvaluateValidData(
+            model,
+            valid_metric,
+            valid_table,
+            early_stopping_rounds,
+            col_user = col_user,
+            col_item = col_item,
+            drop_history = true,
+        )
     end
 
     for epoch = 1:n_epochs
@@ -137,43 +137,18 @@ function fit!(
             end
         end
 
-        if !(valid_table === nothing)
-            # val_loss = 0.0
-            # n_val_sample = 0
-            # for row in Tables.rows(valid_table)
-            #     user = row[col_user]
-            #     item = row[col_item]
-            #     if !(user in keys(model.user2uidx))
-            #         continue
-            #     end
-            #     if !(item in keys(model.item2iidx))
-            #         continue
-            #     end
-            #     uidx = model.user2uidx[user]
-            #     iidx = model.item2iidx[item]
-            #     pred = predict(model, uidx, iidx)
-            #     val_loss += model.loss(pred, 1)
-            #     n_val_sample += 1
-            # end
-            # val_loss /= n_val_sample
-            recoms = predict_u2i(model, val_xs, valid_n, drop_history = true)
-            current_metric = valid_metric(recoms, val_ys)
-
-            if early_stopping_rounds >= 1
-                if current_metric > best_val_metric
-                    best_epoch = epoch
-                    best_val_metric = current_metric
-                end
-                if (epoch - best_epoch) >= early_stopping_rounds
-                    break
-                end
+        if !(valid_metric === nothing)
+            current_metric, stop_train =
+                call(cb, model, epoch, drop_history = true, rev = false)
+            if stop_train
+                break
             end
         else
             current_metric = 0.0
         end
 
         if verbose >= 1 && (epoch % verbose == 0)
-            @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$best_val_metric, best_epoch=$best_epoch"
+            @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$(cb.best_val_metric), best_epoch=$(cb.best_epoch)"
         end
     end
 

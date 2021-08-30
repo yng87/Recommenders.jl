@@ -9,6 +9,9 @@ const tests = [
     "core/item_knn.jl",
     "core/loss_function.jl",
     "metric.jl",
+    "model/item_knn.jl",
+    "model/implicit_mf.jl",
+    "model/bpr.jl",
 ]
 
 for t in tests
