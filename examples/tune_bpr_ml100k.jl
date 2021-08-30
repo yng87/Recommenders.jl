@@ -27,7 +27,8 @@ function main()
     space = Dict(
         # :n_epochs => HP.Choice(:n_epochs, [1, 2]),
         :n_epochs => HP.Choice(:n_epochs, [32, 64, 128, 256]),
-        :learning_rate => HP.LogUniform(:learning_rate, log(1e-3), log(1.0)),
+        :n_negatives => HP.QuantUniform(:n_negatives, 1.0, 16.0, 1.),
+        :learning_rate => HP.LogUniform(:learning_rate, log(1e-4), log(1e-1)),
         :log2_dimension => HP.QuantUniform(:log2_dimension, 4.0, 9.0, 1.0),
         :reg_coeff => HP.LogUniform(:reg_coeff, log(1e-3), log(1.0)),
     )
@@ -35,6 +36,7 @@ function main()
     function invert_output(params)
         @info params
         n_epochs = convert(Int, params[:n_epochs])
+        n_negatives = convert(Int, params[:n_negatives])
         learning_rate = params[:learning_rate]
         dimension = convert(Int, 2^params[:log2_dimension])
         reg_coeff = params[:reg_coeff]
@@ -49,6 +51,7 @@ function main()
             10,
             col_item = :movieid,
             n_epochs = n_epochs,
+            n_negatives = n_negatives,
             learning_rate = learning_rate,
             drop_history = true,
             early_stopping_rounds = -1,
@@ -72,6 +75,7 @@ function main()
         10,
         col_item = :movieid,
         n_epochs = convert(Int, best[:n_epochs]),
+        n_negatives = convert(Int, best[:n_negatives]),
         learning_rate = best[:learning_rate],
         drop_history = true,
         early_stopping_rounds = -1,

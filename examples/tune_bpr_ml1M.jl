@@ -10,7 +10,26 @@ using Recommenders:
     MeanRecall,
     MeanNDCG
 
-function main()
+function one_write(filepath, params, result)
+    n_epochs = convert(Int, params[:n_epochs])
+    n_negatives = convert(Int, params[:n_negatives])
+    learning_rate = params[:learning_rate]
+    dimension = convert(Int, 2^params[:log2_dimension])
+    reg_coeff = params[:reg_coeff]
+
+    ndcg10 = result[:ndcg10]
+    precision10 = result[:precision10]
+    recall10 = result[:recall10]
+
+    str = "$n_epochs,$n_negatives,$learning_rate,$dimension,$reg_coeff,$ndcg10,$precision10,$recall10\n"
+
+    open(filepath, "a") do io
+        write(io, str)
+    end
+end
+
+
+function search(filepath)
     ml1M = Movielens1M()
     download(ml1M)
     rating, _, _ = load_dataset(ml1M)
@@ -24,17 +43,10 @@ function main()
     ndcg10 = MeanNDCG(10)
     metrics = [prec10, recall10, ndcg10]
 
-    space = Dict(
-        # :n_epochs => HP.Choice(:n_epochs, [1, 2]),
-        :n_epochs => HP.Choice(:n_epochs, [32, 64, 128, 256]),
-        :learning_rate => HP.LogUniform(:learning_rate, log(1e-3), log(1.0)),
-        :log2_dimension => HP.QuantUniform(:log2_dimension, 4.0, 9.0, 1.0),
-        :reg_coeff => HP.LogUniform(:reg_coeff, log(1e-3), log(1.0)),
-    )
-
     function invert_output(params)
         @info params
         n_epochs = convert(Int, params[:n_epochs])
+        n_negatives = convert(Int, params[:n_negatives])
         learning_rate = params[:learning_rate]
         dimension = convert(Int, 2^params[:log2_dimension])
         reg_coeff = params[:reg_coeff]
@@ -49,15 +61,74 @@ function main()
             10,
             col_item = :movieid,
             n_epochs = n_epochs,
+            n_negatives = n_negatives,
             learning_rate = learning_rate,
             drop_history = true,
             early_stopping_rounds = -1,
+            verbose = 16,
         )
         @info result
+        one_write(filepath, params, result)
         return -result[:ndcg10]
     end
 
-    @info "Tuning start."
+
+    open(filepath, "w") do io
+        header = "#n_epochs,n_negatives,learning_rate,dimension,reg_coeff,ndcg10,precision10,recall10\n"
+        write(io, header)
+    end
+
+    @info "coarse search"
+    best_result = Inf
+    best_params = nothing
+    for lr in [1e-3, 3e-3, 1e-2], n_neg in [4, 8, 16]
+        params = Dict(
+            :n_epochs => 128,
+            :n_negatives => n_neg,
+            :learning_rate => lr,
+            :log2_dimension => 6,
+            :reg_coeff => 1e-20,
+        )
+        result = invert_output(params)
+        if result < best_result
+            best_result = result
+            best_params = params
+        end
+    end
+
+    for reg_coeff in [1e-3, 3e-3, 1e-2]
+        params = copy(best_params)
+        params[:reg_coeff] = reg_coeff
+        result = invert_output(params)
+        if result < best_result
+            best_result = result
+            best_params = params
+        end
+    end
+
+    @info "refinement"
+    space = Dict(
+        :n_epochs =>
+            HP.Choice(:n_epochs, [best_params[:n_epochs], best_params[:n_epochs] * 2]),
+        :n_negatives => HP.QuantUniform(
+            :n_negatives,
+            best_params[:n_negatives] - 2.0,
+            best_params[:n_negatives] + 2.0,
+            1.0,
+        ),
+        :learning_rate => HP.Uniform(
+            :learning_rate,
+            best_params[:learning_rate] * 0.5,
+            best_params[:learning_rate] * 2.0,
+        ),
+        :log2_dimension => HP.Choice(:log2_dimension, [6, 7, 8]),
+        :reg_coeff => HP.Uniform(
+            :reg_coeff,
+            best_params[:reg_coeff] * 0.5,
+            best_params[:reg_coeff] * 2.0,
+        ),
+    )
+
     best = fmin(invert_output, space, 20, logging_interval = -1)
     @info best
 
@@ -72,12 +143,14 @@ function main()
         10,
         col_item = :movieid,
         n_epochs = convert(Int, best[:n_epochs]),
+        n_negatives = convert(Int, best[:n_negatives]),
         learning_rate = best[:learning_rate],
         drop_history = true,
         early_stopping_rounds = -1,
+        verbose = 16,
     )
     @info result
 
 end
 
-main()
+search("./log_param_search_bpr_ml1M.txt")
