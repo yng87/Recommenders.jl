@@ -64,7 +64,6 @@ function search(filepath)
             n_negatives = n_negatives,
             learning_rate = learning_rate,
             drop_history = true,
-            early_stopping_rounds = -1,
             verbose = 16,
         )
         @info result
@@ -146,7 +145,6 @@ function search(filepath)
         n_negatives = convert(Int, best[:n_negatives]),
         learning_rate = best[:learning_rate],
         drop_history = true,
-        early_stopping_rounds = -1,
         verbose = 16,
     )
     @info result

@@ -56,7 +56,6 @@ function main()
             n_negatives = n_negatives,
             learning_rate = learning_rate,
             drop_history = true,
-            early_stopping_rounds = -1,
         )
         @info result
         return -result[:ndcg10]
@@ -81,7 +80,6 @@ function main()
         n_negatives = convert(Int, best[:n_negatives]),
         learning_rate = best[:learning_rate],
         drop_history = true,
-        early_stopping_rounds = -1,
     )
     @info result
 

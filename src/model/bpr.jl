@@ -50,14 +50,12 @@ end
 function fit!(
     model::BPR,
     table;
-    valid_table = nothing,
-    valid_metric = nothing,
+    callbacks = Any[],
     col_user = :userid,
     col_item = :item_id,
     n_epochs = 2,
     n_negatives = 1,
     learning_rate = 0.01,
-    early_stopping_rounds = -1,
     verbose = -1,
     kwargs...,
 )
@@ -78,16 +76,12 @@ function fit!(
     model.user_embedding = rand(model.dim, n_user)
     model.item_embedding = rand(model.dim, n_item)
 
-    if !(valid_metric === nothing)
-        cb = EvaluateValidData(
-            model,
-            valid_metric,
-            valid_table,
-            early_stopping_rounds,
-            col_user = col_user,
-            col_item = col_item,
-            drop_history = true,
-        )
+    # callback is any callbale with same interface
+    callbacks = append!(Any[LogTrainLoss()], callbacks)
+    for cb in callbacks
+        if typeof(cb) <: AbstractCallback
+            initialize!(cb, model, col_user = col_user, col_item = col_item)
+        end
     end
 
     for epoch = 1:n_epochs
@@ -113,18 +107,12 @@ function fit!(
             end
         end
 
-        if !(valid_metric === nothing)
-            current_metric, stop_train =
-                call(cb, model, epoch, drop_history = true, rev = false)
-            if stop_train
-                break
+        try
+            for cb in callbacks
+                cb(model, train_loss, epoch, verbose)
             end
-        else
-            current_metric = 0.0
-        end
-
-        if verbose >= 1 && (epoch % verbose == 0)
-            @info "epoch=$epoch: train_loss=$train_loss, val_metric=$current_metric, best_val_metric=$(cb.best_val_metric), best_epoch=$(cb.best_epoch)"
+        catch StopTrain
+            break
         end
     end
 
