@@ -22,7 +22,7 @@ end
 struct LogTrainLoss <: AbstractCallback end
 
 initialize!(
-    LogTrainLoss,
+    cb::LogTrainLoss,
     model::AbstractRecommender;
     col_user = :userid,
     col_item = :itemid,
