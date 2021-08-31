@@ -8,7 +8,8 @@ using Recommenders:
     evaluate_u2i,
     MeanPrecision,
     MeanRecall,
-    MeanNDCG
+    MeanNDCG,
+    EvaluateValidData
 
 ml100k = Movielens100k()
 download(ml100k)
@@ -22,6 +23,8 @@ recall10 = MeanRecall(10)
 ndcg10 = MeanNDCG(10)
 metrics = [prec10, recall10, ndcg10]
 
+cb = EvaluateValidData(ndcg10, test_table, 2)
+
 model = BPR(16, 0.01)
 result = evaluate_u2i(
     model,
@@ -29,15 +32,13 @@ result = evaluate_u2i(
     test_table,
     metrics,
     10,
+    [cb],
     col_item = :movieid,
     n_epochs = 2,
     n_negatives = 1,
     learning_rate = 0.01,
     drop_history = true,
-    verbose = -1,
-    valid_table = test_table,
-    valid_metric = ndcg10,
-    early_stopping_rounds = 1,
+    verbose = 1,
 )
 
 @test !(model.user_embedding === nothing)
