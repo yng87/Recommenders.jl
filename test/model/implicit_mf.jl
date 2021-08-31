@@ -32,7 +32,7 @@ result = evaluate_u2i(
     test_table,
     metrics,
     10,
-    [cb],
+    callbacks = [cb],
     col_item = :movieid,
     n_epochs = 20,
     n_negatives = 1,

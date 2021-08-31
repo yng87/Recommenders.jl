@@ -61,8 +61,8 @@ end
 
 function fit!(
     model::ImplicitMF,
-    table,
-    callbacks;
+    table;
+    callbacks = Any[],
     col_user = :userid,
     col_item = :item_id,
     n_epochs = 2,
@@ -94,7 +94,8 @@ function fit!(
         model.μ = rand()
     end
 
-    callbacks = append!(AbstractCallback[LogTrainLoss()], callbacks)
+    # callback is any callbale with same interface
+    callbacks = append!(Any[LogTrainLoss()], callbacks)
     for cb in callbacks
         if typeof(cb) <: AbstractCallback
             initialize!(cb, model, col_user = col_user, col_item = col_item)

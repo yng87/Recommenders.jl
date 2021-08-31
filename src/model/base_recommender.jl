@@ -27,13 +27,12 @@ function evaluate_u2i(
     train_table,
     test_table,
     metric::MeanMetric,
-    n::Int64,
-    callbacks;
+    n::Int64;
     kwargs...,
 )
     col_user = get(kwargs, :col_user, :userid)
     col_item = get(kwargs, :col_item, :itemid)
-    fit!(model, train_table, callbacks; kwargs...)
+    fit!(model, train_table; kwargs...)
     userids, gts = make_u2i_dataset(test_table, col_user = col_user, col_item = col_item)
     recoms = predict_u2i(model, userids, n; kwargs...)
     result = metric(recoms, gts)
@@ -45,13 +44,12 @@ function evaluate_u2i(
     train_table,
     test_table,
     metrics::Union{Vector{<:MeanMetric},Tuple{<:MeanMetric}},
-    n::Int64,
-    callbacks;
+    n::Int64;
     kwargs...,
 )
     col_user = get(kwargs, :col_user, :userid)
     col_item = get(kwargs, :col_item, :itemid)
-    fit!(model, train_table, callbacks; kwargs...)
+    fit!(model, train_table; kwargs...)
     userids, gts = make_u2i_dataset(test_table, col_user = col_user, col_item = col_item)
     recoms = predict_u2i(model, userids, n; kwargs...)
 
