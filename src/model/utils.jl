@@ -9,14 +9,14 @@ struct StopTrain <: Exception end
 
 abstract type AbstractCallback end
 
-function initialize(
+function initialize!(
     cb::AbstractCallback,
     model::AbstractRecommender;
     col_user = :userid,
     col_item = :itemid,
 )
 
-    throw("initialize not implemented.")
+    throw("initialize! not implemented.")
 end
 
 struct LogTrainLoss <: AbstractCallback end
