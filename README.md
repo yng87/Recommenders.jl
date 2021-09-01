@@ -4,13 +4,13 @@
 [![Build Status](https://github.com/yng87/Recommenders.jl/workflows/CI/badge.svg)](https://github.com/yng87/Recommenders.jl/actions)
 
 [WIP]
-Collection of datasets and algorithms for implicit recommendation.
+Collection of datasets and algorithms for recommendation from implicit feedback.
 
 - Consistent interface for fit, predict and evaluate.
 - Accepts Tables.jl - compatible data.
 
 # Movielens 100k
-## Random 80/20 split.
+## Random 80/20 split, all rating set to be 1.
 
 | Model | Precision@10 | Recall@10 | nDCG@10 | Ref. |
 |-------| -------------| ----------| ------- | ---- |
@@ -21,7 +21,7 @@ Collection of datasets and algorithms for implicit recommendation.
 
 
 # Movielens 1M
-## Random 80/20 split.
+## Random 80/20 split, all rating set to be 1.
 
 | Model | Precision@10 | Recall@10 | nDCG@10 | Ref. |
 |-------| -------------| ----------| ------- | ---- |
