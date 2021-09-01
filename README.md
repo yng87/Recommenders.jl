@@ -10,7 +10,7 @@ Collection of datasets and algorithms for recommendation from implicit feedback.
 - Accepts Tables.jl - compatible data.
 
 # Movielens 100k
-## Random 80/20 split, all rating set to be 1.
+ Random 80/20 split, all rating set to be 1.
 
 | Model | Precision@10 | Recall@10 | nDCG@10 | Ref. |
 |-------| -------------| ----------| ------- | ---- |
@@ -21,7 +21,7 @@ Collection of datasets and algorithms for recommendation from implicit feedback.
 
 
 # Movielens 1M
-## Random 80/20 split, all rating set to be 1.
+Random 80/20 split, all rating set to be 1.
 
 | Model | Precision@10 | Recall@10 | nDCG@10 | Ref. |
 |-------| -------------| ----------| ------- | ---- |
