@@ -127,12 +127,13 @@ function fit!(
     squared_norms = dropdims(sum(Y .^ 2, dims = 1), dims = 1)
 
     for epoch = 1:n_epochs
-        train_loss = 0
+        train_losses = Vector{Float64}(undef, n_item)
 
-        for i = 1:n_item
+        Threads.@threads for i = 1:n_item
             cd!(model, i, Y, inner_prod, squared_norms)
-            train_loss += compute_loss(model, i, inner_prod, squared_norms)
+            train_losses[i] = compute_loss(model, i, inner_prod, squared_norms)
         end
+        train_loss = sum(train_losses)
 
         try
             for cb in callbacks
