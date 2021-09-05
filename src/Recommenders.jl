@@ -21,6 +21,7 @@ include("model/most_popular.jl")
 include("model/item_knn.jl")
 include("model/implicit_mf.jl")
 include("model/bpr.jl")
+include("model/slim.jl")
 
 
 
