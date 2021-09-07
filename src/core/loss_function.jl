@@ -48,10 +48,14 @@ function cd!(loss::ElasticNet, X, y, w)
     ρ = loss.l1_ratio
     γ = n*α*ρ
 
-    for j in 1:n
-        denom = sum(X[:, j].^2) + n*α*(1-ρ)
+    denoms = dropdims(sum(X.^2, dims=1), dims=1) .+ n*α*(1-ρ)
+    XT_X = X'*X
+    yT_X = y'*X
 
-        z = y' * X[:, j] - (X[:, j]' * X * w - X[:, j]' * X[:, j] * w[j])
+    for j in 1:n
+        denom = denoms[j]
+
+        z = yT_X[j] - (XT_X[j, :]' * w - XT_X[j,j] * w[j])
         signz = ifelse(z>=0, 1, -1)
 
         if (signz>0 && z > γ)
