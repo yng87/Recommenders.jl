@@ -52,18 +52,29 @@ function cd!(loss::ElasticNet, X, y, w)
     XT_X = X'*X
     yT_X = y'*X
 
+    # chche for faster computation
+    XT_X_w = XT_X * w
+    updatevec = spzeros(n)
+
     for j in 1:n
         denom = denoms[j]
 
-        z = yT_X[j] - (XT_X[j, :]' * w - XT_X[j,j] * w[j])
+        z = yT_X[j] - XT_X_w[j] + XT_X[j,j] * w[j]
         signz = ifelse(z>=0, 1, -1)
 
+        old_wj = w[j]
         if (signz>0 && z > γ)
             w[j] = (z-γ)/denom
         elseif (signz<0 && z<-γ)
             w[j] = (z+γ)/denom
         else
             w[j] = 0
+        end
+        # update cached value
+        if !(old_wj ≈ w[j])
+            updatevec[j] = w[j] - old_wj
+            XT_X_w += XT_X * updatevec
+            updatevec[j] = 0
         end
     end
 end
