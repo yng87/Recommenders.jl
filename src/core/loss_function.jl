@@ -43,7 +43,7 @@ function (loss::ElasticNet)(X, y, w)
 end
 
 function cd!(loss::ElasticNet, X, y, w)
-    n = length(y)
+    n = length(w)
     α = loss.α
     ρ = loss.l1_ratio
     γ = n*α*ρ
@@ -59,11 +59,11 @@ function cd!(loss::ElasticNet, X, y, w)
         signz = ifelse(z>=0, 1, -1)
 
         if (signz>0 && z > γ)
-            w[j]=(z-γ)/denom
+            w[j] = (z-γ)/denom
         elseif (signz<0 && z<-γ)
             w[j] = (z+γ)/denom
         else
-            w[j]=0
+            w[j] = 0
         end
     end
 end
