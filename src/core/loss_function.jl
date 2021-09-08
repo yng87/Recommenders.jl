@@ -56,10 +56,9 @@ function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, shuffle=false, 
     XT_X_w = XT_X * w
     updatevec = spzeros(n)
 
-    iter=1
     conv = Inf
     current_loss = loss(X, y, w)
-    if (iter<=max_iter) && (conv > tol)
+    for iter in 1:max_iter
         prev_loss = current_loss
 
         if shuffle
@@ -96,10 +95,13 @@ function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, shuffle=false, 
 
         current_loss = loss(X, y, w)
         conv = abs(current_loss - prev_loss) / prev_loss
-        iter += 1
 
         if (verbose >= 1) && (iter % verbose == 0)
             @info "iter=$iter, current_loss=$current_loss, convergence=$conv"
+        end
+
+        if conv < tol
+            break
         end
     end
 end
