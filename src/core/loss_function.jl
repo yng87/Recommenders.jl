@@ -42,7 +42,7 @@ function (loss::ElasticNet)(X, y, w)
     return loss
 end
 
-function cd!(loss::ElasticNet, X, y, w)
+function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, shuffle=false, n_choice=-1)
     n = length(w)
     α = loss.α
     ρ = loss.l1_ratio
@@ -56,25 +56,46 @@ function cd!(loss::ElasticNet, X, y, w)
     XT_X_w = XT_X * w
     updatevec = spzeros(n)
 
-    for j in 1:n
-        denom = denoms[j]
+    iter=1
+    conv = Inf
+    current_loss = loss(X, y, w)
+    if (iter<=max_iter) && (conv > tol)
+        prev_loss = current_loss
 
-        z = yT_X[j] - XT_X_w[j] + XT_X[j,j] * w[j]
-        signz = ifelse(z>=0, 1, -1)
-
-        old_wj = w[j]
-        if (signz>0 && z > γ)
-            w[j] = (z-γ)/denom
-        elseif (signz<0 && z<-γ)
-            w[j] = (z+γ)/denom
+        if shuffle
+            seq_idx=randperm(n)
+            if n_choice>=1
+                n_choice=min(n, n_choice)
+                seq_idx=seq_idx[1:n_choice]
+            end
         else
-            w[j] = 0
+            seq_idx=1:n
         end
-        # update cached value
-        if !(old_wj ≈ w[j])
-            updatevec[j] = w[j] - old_wj
-            XT_X_w += XT_X * updatevec
-            updatevec[j] = 0
+
+        for j in seq_idx
+            denom = denoms[j]
+
+            z = yT_X[j] - XT_X_w[j] + XT_X[j,j] * w[j]
+            signz = ifelse(z>=0, 1, -1)
+
+            old_wj = w[j]
+            if (signz>0 && z > γ)
+                w[j] = (z-γ)/denom
+            elseif (signz<0 && z<-γ)
+                w[j] = (z+γ)/denom
+            else
+                w[j] = 0
+            end
+            # update cached value
+            if !(old_wj ≈ w[j])
+                updatevec[j] = w[j] - old_wj
+                XT_X_w += XT_X * updatevec
+                updatevec[j] = 0
+            end
         end
+
+        current_loss = loss(X, y, w)
+        conv = abs(current_loss - prev_loss) / prev_loss
+        iter += 1
     end
 end
