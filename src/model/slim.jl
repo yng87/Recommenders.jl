@@ -53,7 +53,7 @@ function fit!(
     unique_items = collect(keys(model.iidx2item))
     n_item = length(unique_items)
 
-    model.w = [sprandn(n_item, 0.5) for _ in 1:n_item]
+    model.w = [dropzeros(sprandn(n_item, 0.5)) for _ in 1:n_item]
 
     # callback is any callbale with same interface
     callbacks = append!(Any[LogTrainLoss()], callbacks)
@@ -71,6 +71,7 @@ function fit!(
             mask = spzeros(n_item, n_item)
             mask[i, i] = 1
             cd!(model.loss, Y - Y*mask, Y[:, i], model.w[i])
+            dropzeros!(model.w[i])
             train_losses[i] = model.loss(Y - Y*mask, Y[:, i], model.w[i])
         end
         train_loss = sum(train_losses)

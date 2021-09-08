@@ -14,10 +14,11 @@ using Recommenders:
 ml100k = Movielens100k()
 download(ml100k)
 rating, _, _ = load_dataset(ml100k)
+rating = rating |> TableOperations.transform(Dict(:rating=>x->1.))
 
 Random.seed!(1234);
 # prepare small dataset to save time
-rating, _ = ratio_split(rating, 0.1)
+# rating, _ = ratio_split(rating, 0.1)
 train_table, test_table = ratio_split(rating, 0.8)
 
 
@@ -27,18 +28,20 @@ recall10 = MeanRecall(10)
 ndcg10 = MeanNDCG(10)
 metrics = [prec10, recall10, ndcg10]
 
-cb = EvaluateValidData(ndcg10, test_table, -1)
+cb1 = EvaluateValidData(ndcg10, test_table, -1, "test_ndcg10")
+cb2 = EvaluateValidData(ndcg10, train_table, -1, "train_ndcg10")
 
-model = SLIM(0.1, 0.2)
+model = SLIM(1e-4, 0.1)
+
 result = evaluate_u2i(
     model,
     train_table,
     test_table,
     metrics,
     10,
-    callbacks = [cb],
+    callbacks = [cb1, cb2],
     col_item = :movieid,
-    n_epochs = 1,
+    n_epochs = 2,
     drop_history = false,
     verbose = 1,
 )
