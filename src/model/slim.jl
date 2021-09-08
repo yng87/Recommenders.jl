@@ -1,5 +1,6 @@
 mutable struct SLIM <: AbstractRecommender
     loss::LossFunction
+    k::Int
     w
 
     user2uidx::Union{Dict,Nothing}
@@ -7,11 +8,18 @@ mutable struct SLIM <: AbstractRecommender
     iidx2item::Union{Dict,Nothing}
     user_history::Union{Dict,Nothing}
 
-    SLIM(α::Float64, l1_ratio::Float64) =
-        new(ElasticNet(α, l1_ratio), nothing, nothing, nothing, nothing, nothing)
+    SLIM(α::Float64, l1_ratio::Float64, k::Int=-1) =
+        new(ElasticNet(α, l1_ratio), k, nothing, nothing, nothing, nothing, nothing)
 end
 
-
+function truncate_at_k!(w::SparseVector, k::Int)
+    is, ws = findnz(w)
+    if k>=length(ws)
+        return
+    end
+    arg_outof_k = sortperm(ws, rev=true)[(k+1):end]
+    w[is[arg_outof_k]] .= 0
+end
 
 function predict(model::SLIM, uidx, iidx)::Float64
     pred = 0.0
@@ -26,11 +34,13 @@ end
 function fit!(
     model::SLIM,
     table;
-    callbacks = Any[],
     col_user = :userid,
     col_item = :item_id,
     col_rating = :rating,
-    n_epochs = 2,
+    shuffle=false,
+    n_choice=-1,
+    max_iter = 2,
+    tol=1e-4,
     verbose = -1,
     kwargs...,
 )
@@ -53,36 +63,14 @@ function fit!(
     unique_items = collect(keys(model.iidx2item))
     n_item = length(unique_items)
 
-    model.w = [dropzeros(sprandn(n_item, 0.5)) for _ in 1:n_item]
+    model.w = [spzeros(n_item) for _ in 1:n_item]
 
-    # callback is any callbale with same interface
-    callbacks = append!(Any[LogTrainLoss()], callbacks)
-    for cb in callbacks
-        if typeof(cb) <: AbstractCallback
-            initialize!(cb, model, col_user = col_user, col_item = col_item)
-        end
-    end
-
-
-    for epoch = 1:n_epochs
-        train_losses = Vector{Float64}(undef, n_item)
-
-        Threads.@threads for i = 1:n_item
-            mask = spzeros(n_item, n_item)
-            mask[i, i] = 1
-            cd!(model.loss, Y - Y*mask, Y[:, i], model.w[i])
-            dropzeros!(model.w[i])
-            train_losses[i] = model.loss(Y - Y*mask, Y[:, i], model.w[i])
-        end
-        train_loss = sum(train_losses)
-
-        try
-            for cb in callbacks
-                cb(model, train_loss, epoch, verbose)
-            end
-        catch StopTrain
-            break
-        end
+    Threads.@threads for i = 1:n_item
+        mask = spzeros(n_item, n_item)
+        mask[i, i] = 1
+        cd!(model.loss, Y - Y*mask, Y[:, i], model.w[i], shuffle=shuffle, n_choice=n_choice, verbose=verbose, max_iter=max_iter, tol=tol)
+        dropzeros!(model.w[i])
+        truncate_at_k!(model.w[i], model.k)
     end
 
 end

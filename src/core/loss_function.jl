@@ -42,7 +42,7 @@ function (loss::ElasticNet)(X, y, w)
     return loss
 end
 
-function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, shuffle=false, n_choice=-1)
+function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, shuffle=false, n_choice=-1, verbose=-1)
     n = length(w)
     α = loss.α
     ρ = loss.l1_ratio
@@ -97,5 +97,9 @@ function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, shuffle=false, 
         current_loss = loss(X, y, w)
         conv = abs(current_loss - prev_loss) / prev_loss
         iter += 1
+
+        if (verbose >= 1) && (iter % verbose == 0)
+            @info "iter=$iter, current_loss=$current_loss, convergence=$conv"
+        end
     end
 end

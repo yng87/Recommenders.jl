@@ -28,10 +28,8 @@ recall10 = MeanRecall(10)
 ndcg10 = MeanNDCG(10)
 metrics = [prec10, recall10, ndcg10]
 
-cb1 = EvaluateValidData(ndcg10, test_table, -1, "test_ndcg10")
-cb2 = EvaluateValidData(ndcg10, train_table, -1, "train_ndcg10")
 
-model = SLIM(1e-4, 0.1)
+model = SLIM(1e-4, 0.1, 10)
 
 result = evaluate_u2i(
     model,
@@ -39,11 +37,12 @@ result = evaluate_u2i(
     test_table,
     metrics,
     10,
-    callbacks = [cb1, cb2],
+    shuffle=true,
+    n_choice=2,
     col_item = :movieid,
-    n_epochs = 2,
+    max_iter = 2,
     drop_history = false,
-    verbose = 1,
+    verbose = -1,
 )
 
 @test !(model.w === nothing)
