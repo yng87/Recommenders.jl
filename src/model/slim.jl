@@ -84,12 +84,12 @@ function predict_u2i(
     end
     uidx = model.user2uidx[userid]
     unique_iidx = collect(keys(model.iidx2item))
+    if drop_history
+        filter!(e -> !(e in model.user_history[uidx]), unique_iidx)
+    end
     preds = [predict(model, uidx, iidx) for iidx in unique_iidx]
     pred_iidx = unique_iidx[sortperm(preds, rev = true)]
     pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
-    if drop_history
-        filter!(e -> !(e in model.user_history[uidx]), pred_items)
-    end
     n = min(n, length(pred_items))
     return pred_items[1:n]
 end
