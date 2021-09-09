@@ -65,7 +65,7 @@ function fit!(
     Threads.@threads for i = 1:n_item
         mask = spzeros(n_item, n_item)
         mask[i, i] = 1
-        lasso_res = fit(LassoPath, Y - Y*mask, Vector(Y[:, i]), α=model.l1_ratio, λminratioλ=model.λminratio, standardize=false, intercept=false, stopearly=true)
+        lasso_res = fit(LassoPath, Y - Y*mask, Vector(Y[:, i]), α=model.l1_ratio, λminratio=model.λminratio, standardize=false, intercept=false, stopearly=true)
         model.w[i] = lasso_res.coefs[:, end]
         truncate_at_k!(model.w[i], model.k)
         dropzeros!(model.w[i])
