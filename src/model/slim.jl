@@ -3,12 +3,12 @@ mutable struct SLIM <: AbstractRecommender
     λminratio::Float64
     k::Int
 
-    w::Union{Vector{SparseVector{Float64, Int64}}, Nothing}
+    W
 
     user2uidx::Union{Dict,Nothing}
     item2iidx::Union{Dict,Nothing}
     iidx2item::Union{Dict,Nothing}
-    user_history::Union{Dict,Nothing}
+    R
 
     SLIM(l1_ratio::Float64=0.5, λminratio::Float64=1e-4, k::Int=-1) =
         new(l1_ratio, λminratio, k, nothing, nothing, nothing, nothing, nothing)
@@ -23,52 +23,43 @@ function truncate_at_k!(w::SparseVector, k::Int)
     w[is[arg_outof_k]] .= 0
 end
 
-function predict(model::SLIM, uidx, iidx)::Float64
-    pred = 0.0
-    for i in model.user_history[uidx]
-        if i != iidx
-            pred += model.w[iidx][i]
-        end
-    end
-    return pred
-end
-
 function fit!(
     model::SLIM,
     table;
     col_user = :userid,
-    col_item = :item_id,
+    col_item = :itemid,
     col_rating = :rating,
     kwargs...,
 )
     table, model.user2uidx, model.item2iidx, model.iidx2item =
         make_idmap(table, col_user = col_user, col_item = col_item)
 
-    Y = rows2sparse(
+    model.R = rows2sparse(
         table,
         col_user = col_user,
         col_item = col_item,
         col_rating = col_rating,
     )
 
-    model.user_history = Dict()
-    for uidx = 1:size(Y)[1]
-        Is, _ = findnz(Y[uidx, :])
-        model.user_history[uidx] = Is
-    end
-
     unique_items = collect(keys(model.iidx2item))
     n_item = length(unique_items)
 
-    model.w = Vector{SparseVector{Float64, Int64}}(undef, n_item)
+    model.W=spzeros(n_item, n_item)
+    # for multithreading
+    tmp_ws = Vector{SparseVector{Float64, Int}}(undef, n_item)
 
     Threads.@threads for i = 1:n_item
         mask = spzeros(n_item, n_item)
         mask[i, i] = 1
-        lasso_res = fit(LassoPath, Y - Y*mask, Vector(Y[:, i]), α=model.l1_ratio, λminratio=model.λminratio, standardize=false, intercept=false, stopearly=true)
-        model.w[i] = lasso_res.coefs[:, end]
-        truncate_at_k!(model.w[i], model.k)
-        dropzeros!(model.w[i])
+        lasso_res = fit(LassoPath, model.R - model.R*mask, Vector(model.R[:, i]), α=model.l1_ratio, λminratio=model.λminratio, standardize=false, intercept=false, stopearly=true)
+        wi = lasso_res.coefs[:, end]
+        truncate_at_k!(wi, model.k)
+        dropzeros!(wi)
+        tmp_ws[i] = wi
+    end
+
+    for i in 1:n_item
+        model.W[:, i] = tmp_ws[i]
     end
 end
 
@@ -82,14 +73,24 @@ function predict_u2i(
     if !(userid in keys(model.user2uidx))
         return []
     end
+
     uidx = model.user2uidx[userid]
-    unique_iidx = collect(keys(model.iidx2item))
-    if drop_history
-        filter!(e -> !(e in model.user_history[uidx]), unique_iidx)
+    user_history = model.R[uidx, :]
+
+    pred = (user_history'*model.W)' 
+    viewed_item, ratings = findnz(user_history)
+    for (iidx, rui) in zip(viewed_item, ratings)
+        pred[iidx] -= rui * model.W[iidx, iidx]
     end
-    preds = [predict(model, uidx, iidx) for iidx in unique_iidx]
-    pred_iidx = unique_iidx[sortperm(preds, rev = true)]
+
+    pred_iidx = sortperm(pred, rev=true)
+    # this is very slow
+    if drop_history
+        filter!(p -> !(p in viewed_item), pred_iidx)
+    end
+
     pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
+
     n = min(n, length(pred_items))
     return pred_items[1:n]
 end

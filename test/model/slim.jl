@@ -17,8 +17,6 @@ rating, _, _ = load_dataset(ml100k)
 rating = rating |> TableOperations.transform(Dict(:rating=>x->1.))
 
 Random.seed!(1234);
-# prepare small dataset to save time
-# rating, _ = ratio_split(rating, 0.1)
 train_table, test_table = ratio_split(rating, 0.8)
 
 
@@ -29,7 +27,7 @@ ndcg10 = MeanNDCG(10)
 metrics = [prec10, recall10, ndcg10]
 
 
-model = SLIM(1e-4, 0.1, 10)
+model = SLIM(1e-4, 1e-4, 10)
 
 result = evaluate_u2i(
     model,
@@ -37,11 +35,12 @@ result = evaluate_u2i(
     test_table,
     metrics,
     10,
-    drop_history = false,
+    drop_history = true,
+    col_item=:movieid,
     verbose = -1,
 )
 
-@test !(model.w === nothing)
+@test !(model.W === nothing)
 
 @test result[:ndcg10] >= 0
 @test result[:precision10] >= 0
