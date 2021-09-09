@@ -42,7 +42,7 @@ end
     y=[1.,0.]
     X=[1. 0.;-1. 2.]
     w=[0.2, -0.4]
-    cd!(elasticnet, X, y, w)
+    cd!(elasticnet, X, y, w, max_iter=1)
     # I derived the numbers below by the elementary calculation by hand.
     @test w ≈ [0.1/2.9, -0.0]
 end
