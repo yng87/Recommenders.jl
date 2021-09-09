@@ -18,7 +18,7 @@ TreeParzen = "eb66a70c-a255-11e9-03ea-7ba6b2f22006"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
-CSV = "0.8"
+CSV = "0.8, 0.9"
 DataFrames = "0.22, 1"
 Documenter = "0.27"
 HTTP = "0.9"
