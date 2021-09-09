@@ -42,7 +42,7 @@ function (loss::ElasticNet)(X, y, w)
     return loss
 end
 
-function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, shuffle=false, n_choice=-1, verbose=-1)
+function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, random=false, verbose=-1)
     n = length(w)
     α = loss.α
     ρ = loss.l1_ratio
@@ -61,14 +61,9 @@ function cd!(loss::ElasticNet, X, y, w; tol=1e-4, max_iter=1000, shuffle=false, 
     for iter in 1:max_iter
         prev_loss = current_loss
 
-        if shuffle
-            seq_idx=randperm(n)
-            if n_choice>=1
-                n_choice=min(n, n_choice)
-                seq_idx=seq_idx[1:n_choice]
-            end
-        else
-            seq_idx=1:n
+        seq_idx=1:n
+        if random
+            seq_idx = rand(seq_idx, n)
         end
 
         for j in seq_idx

@@ -37,8 +37,7 @@ function fit!(
     col_user = :userid,
     col_item = :item_id,
     col_rating = :rating,
-    shuffle=false,
-    n_choice=-1,
+    random=false,
     max_iter = 2,
     tol=1e-4,
     verbose = -1,
@@ -68,11 +67,10 @@ function fit!(
     Threads.@threads for i = 1:n_item
         mask = spzeros(n_item, n_item)
         mask[i, i] = 1
-        cd!(model.loss, Y - Y*mask, Y[:, i], model.w[i], shuffle=shuffle, n_choice=n_choice, verbose=verbose, max_iter=max_iter, tol=tol)
-        dropzeros!(model.w[i])
+        cd!(model.loss, Y - Y*mask, Y[:, i], model.w[i], random=random, verbose=verbose, max_iter=max_iter, tol=tol)
         truncate_at_k!(model.w[i], model.k)
+        dropzeros!(model.w[i])
     end
-
 end
 
 function predict_u2i(
