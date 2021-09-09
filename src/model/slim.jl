@@ -1,20 +1,22 @@
 mutable struct SLIM <: AbstractRecommender
-    loss::LossFunction
+    l1_ratio::Float64
+    λminratio::Float64
     k::Int
-    w
+
+    w::Union{Vector{SparseVector{Float64, Int64}}, Nothing}
 
     user2uidx::Union{Dict,Nothing}
     item2iidx::Union{Dict,Nothing}
     iidx2item::Union{Dict,Nothing}
     user_history::Union{Dict,Nothing}
 
-    SLIM(α::Float64, l1_ratio::Float64, k::Int=-1) =
-        new(ElasticNet(α, l1_ratio), k, nothing, nothing, nothing, nothing, nothing)
+    SLIM(l1_ratio::Float64=0.5, λminratio::Float64=1e-4, k::Int=-1) =
+        new(l1_ratio, λminratio, k, nothing, nothing, nothing, nothing, nothing)
 end
 
 function truncate_at_k!(w::SparseVector, k::Int)
     is, ws = findnz(w)
-    if k>=length(ws)
+    if k>=length(ws) || k<1
         return
     end
     arg_outof_k = sortperm(ws, rev=true)[(k+1):end]
@@ -62,12 +64,13 @@ function fit!(
     unique_items = collect(keys(model.iidx2item))
     n_item = length(unique_items)
 
-    model.w = [spzeros(n_item) for _ in 1:n_item]
+    model.w = Vector{SparseVector{Float64, Int64}}(undef, n_item)
 
     Threads.@threads for i = 1:n_item
         mask = spzeros(n_item, n_item)
         mask[i, i] = 1
-        cd!(model.loss, Y - Y*mask, Y[:, i], model.w[i], random=random, verbose=verbose, max_iter=max_iter, tol=tol)
+        lasso_res = fit(LassoPath, Y - Y*mask, Vector(Y[:, i]), α=model.l1_ratio, λminratio=model.λminratio, standardize=false, intercept=false)
+        model.w[i] = lasso_res.coefs[:, end]
         truncate_at_k!(model.w[i], model.k)
         dropzeros!(model.w[i])
     end
