@@ -29,6 +29,8 @@ function fit!(
     col_user = :userid,
     col_item = :itemid,
     col_rating = :rating,
+    cd_tol=1e-7, 
+    nλ=100,
     kwargs...,
 )
     table, model.user2uidx, model.item2iidx, model.iidx2item =
@@ -51,7 +53,7 @@ function fit!(
     Threads.@threads for i = 1:n_item
         mask = spzeros(n_item, n_item)
         mask[i, i] = 1
-        lasso_res = fit(LassoPath, model.R - model.R*mask, Vector(model.R[:, i]), α=model.l1_ratio, λminratio=model.λminratio, standardize=false, intercept=false, stopearly=true)
+        lasso_res = fit(LassoPath, model.R - model.R*mask, Vector(model.R[:, i]), α=model.l1_ratio, λminratio=model.λminratio, standardize=false, intercept=false, stopearly=true, cd_tol=cd_tol, nλ=nλ)
         wi = lasso_res.coefs[:, end]
         truncate_at_k!(wi, model.k)
         dropzeros!(wi)
