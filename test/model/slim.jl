@@ -37,10 +37,6 @@ result = evaluate_u2i(
     test_table,
     metrics,
     10,
-    shuffle=true,
-    n_choice=2,
-    col_item = :movieid,
-    max_iter = 2,
     drop_history = false,
     verbose = -1,
 )
