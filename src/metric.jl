@@ -135,4 +135,3 @@ MeanDCG(k) = MeanMetric(DCG(k))
 MeanNDCG(k) = MeanMetric(NDCG(k))
 
 name(metric::MeanMetric) = Symbol(metric.base_metric.name, metric.base_metric.k)
-

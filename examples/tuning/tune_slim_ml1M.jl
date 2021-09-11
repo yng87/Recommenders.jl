@@ -15,7 +15,7 @@ function main()
     download(ml1M)
     rating, _, _ = load_dataset(ml1M)
 
-    rating = rating |> TableOperations.transform(Dict(:rating=>x->1.))
+    rating = rating |> TableOperations.transform(Dict(:rating => x -> 1.0))
 
     Random.seed!(1234)
     train_valid_table, test_table = ratio_split(rating, 0.8)
@@ -29,7 +29,7 @@ function main()
     space = Dict(
         :λminratio => HP.LogUniform(:λminratio, log(1e-6), log(0.5)),
         :l1_ratio => HP.LogUniform(:l1_ratio, log(1e-6), log(0.9999)),
-        :k=>HP.QuantUniform(:k, 1., 1000., 1.)
+        :k => HP.QuantUniform(:k, 1.0, 1000.0, 1.0),
     )
 
     function invert_output(params)
@@ -48,8 +48,8 @@ function main()
             10,
             col_item = :movieid,
             drop_history = true,
-            cd_tol=1e-4,
-            nλ=10,
+            cd_tol = 1e-4,
+            nλ = 10,
         )
         @info result
         return -result[:ndcg10]
@@ -70,8 +70,8 @@ function main()
         10,
         col_item = :movieid,
         drop_history = true,
-        cd_tol=1e-4,
-        nλ=10,
+        cd_tol = 1e-4,
+        nλ = 10,
     )
     @info result
 

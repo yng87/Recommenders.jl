@@ -15,10 +15,10 @@ function main()
     download(ml100k)
     rating, _, _ = load_dataset(ml100k)
 
-    rating = rating |> TableOperations.transform(Dict(:rating=>x->1.))
+    rating = rating |> TableOperations.transform(Dict(:rating => x -> 1.0))
     for (i, row) in enumerate(Tables.rows(rating))
         println(row)
-        if i>=4
+        if i >= 4
             break
         end
     end
@@ -35,7 +35,7 @@ function main()
     space = Dict(
         :λminratio => HP.LogUniform(:λminratio, log(1e-6), log(0.5)),
         :l1_ratio => HP.LogUniform(:l1_ratio, log(1e-6), log(0.9999)),
-        :k=>HP.QuantUniform(:k, 1., 1000., 1.)
+        :k => HP.QuantUniform(:k, 1.0, 1000.0, 1.0),
     )
 
     function invert_output(params)
