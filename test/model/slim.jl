@@ -14,7 +14,7 @@ using Recommenders:
 ml100k = Movielens100k()
 download(ml100k)
 rating, _, _ = load_dataset(ml100k)
-rating = rating |> TableOperations.transform(Dict(:rating=>x->1.))
+rating = rating |> TableOperations.transform(Dict(:rating => x -> 1.0))
 
 Random.seed!(1234);
 train_table, test_table = ratio_split(rating, 0.8)
@@ -36,7 +36,9 @@ result = evaluate_u2i(
     metrics,
     10,
     drop_history = true,
-    col_item=:movieid,
+    col_item = :movieid,
+    cd_tol = 1e-1,
+    nλ = 2,
     verbose = -1,
 )
 
