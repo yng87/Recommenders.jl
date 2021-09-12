@@ -12,6 +12,7 @@ const tests = [
     "model/item_knn.jl",
     "model/implicit_mf.jl",
     "model/bpr.jl",
+    "model/slim.jl",
 ]
 
 for t in tests

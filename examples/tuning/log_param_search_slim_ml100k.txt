@@ -1,0 +1,5 @@
+[ Info: fmin: 100 / 100 trials carried out
+[ Info: Successfully completed fmin
+[ Info: Dict{Symbol, Any}(:k => 908.0, :λminratio => 0.029052468222707274, :l1_ratio => 0.003308685140740372)
+[ Info: Evaluate best model.
+[ Info: (ndcg10 = 0.4359389846383426, precision10 = 0.36256627783669154, recall10 = 0.23845187441841567)

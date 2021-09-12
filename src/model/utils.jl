@@ -36,6 +36,7 @@ end
 
 mutable struct EvaluateValidData <: AbstractCallback
     valid_metric::MeanMetric
+    name::Union{AbstractString,Symbol}
     valid_table::Any
     early_stopping_rounds::Int
     best_epoch::Int
@@ -44,8 +45,22 @@ mutable struct EvaluateValidData <: AbstractCallback
     val_xs::Any
     val_ys::Any
 
-    EvaluateValidData(valid_metric::MeanMetric, valid_table, early_stopping_rounds) =
-        new(valid_metric, valid_table, early_stopping_rounds, 1, 0.0, -1, nothing, nothing)
+    EvaluateValidData(
+        valid_metric::MeanMetric,
+        valid_table,
+        early_stopping_rounds,
+        name = "val_metric",
+    ) = new(
+        valid_metric,
+        name,
+        valid_table,
+        early_stopping_rounds,
+        1,
+        0.0,
+        -1,
+        nothing,
+        nothing,
+    )
 end
 
 function initialize!(
@@ -77,7 +92,7 @@ function (cb::EvaluateValidData)(
     end
 
     if verbose >= 1 && (epoch % verbose == 0)
-        @info "epoch=$epoch: val_metric=$current_metric, best_val_metric=$(cb.best_val_metric), best_epoch=$(cb.best_epoch)"
+        @info "epoch=$epoch: $(cb.name)=$current_metric, best_$(cb.name)=$(cb.best_val_metric), best_epoch=$(cb.best_epoch)"
     end
 
     if cb.early_stopping_rounds >= 1 &&

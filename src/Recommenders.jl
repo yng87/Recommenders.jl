@@ -2,7 +2,15 @@ module Recommenders
 
 
 using HTTP,
-    ZipFile, DataFrames, CSV, SparseArrays, Parameters, Random, Tables, TableOperations
+    ZipFile,
+    DataFrames,
+    CSV,
+    SparseArrays,
+    Parameters,
+    Random,
+    Tables,
+    TableOperations,
+    Lasso
 import Base: download
 
 include("dataset/downloadutils.jl")
@@ -21,6 +29,7 @@ include("model/most_popular.jl")
 include("model/item_knn.jl")
 include("model/implicit_mf.jl")
 include("model/bpr.jl")
+include("model/slim.jl")
 
 
 
