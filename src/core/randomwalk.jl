@@ -61,16 +61,14 @@ function pixie_multi_hit_boost(visited_counts::Vector{Dict{Int,Int}})::Dict{Int,
     return boosted_visited_count
 end
 
-function sum_multi_randomwalk_count(visited_counts::Vector{Dict{Int,Int}})::Dict{Int,Int}
-    total_visited_count::Dict(Int, Int) = visited_counts[1]
-    for i = 2:length(visited_counts)
-        for (nodeid, n) in visited_counts[i]
-            if nodeid in keys(total_visited_count)
-                total_visited_count[nodeid] += n
-            else
-                total_visited_count[nodeid] = n
-            end
-        end
+function aggregate_multi_randomwalk(
+    visited_counts::Vector{Dict{Int,Int}},
+    aggregate_function = sum,
+)::Dict{Int,Int}
+    allnodes = union(keys.(visited_counts)...)
+    total_visited_count = :Dict{Int,Int}()
+    for nodeid in allnodes
+        total_visited_count[nodeid] = aggregate_function(get.(visited_counts, nodeid, 0))
     end
     return total_visited_count
 end
@@ -91,7 +89,8 @@ function randomwalk_multiple(
     min_high_visited_candidates,
     high_visited_count_threshold,
     max_degree = nothing,
-    pixie_multi_hit_boosting = true,
+    aggregate_function = sum,
+    pixie_multi_hit_boosting = false,
 )::Dict{Int,Int}
 
     if max_degree === nothing
@@ -120,6 +119,6 @@ function randomwalk_multiple(
     if pixie_multi_hit_boosting
         return pixie_multi_hit_boost(visited_counts)
     else
-        return sum_multi_randomwalk_count(visited_counts)
+        return aggregate_multi_randomwalk(visited_counts, aggregate_function)
     end
 end
