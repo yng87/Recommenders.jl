@@ -10,7 +10,8 @@ using HTTP,
     Random,
     Tables,
     TableOperations,
-    Lasso
+    Lasso,
+    Distributions
 import Base: download
 
 include("dataset/downloadutils.jl")
@@ -21,6 +22,7 @@ include("dataset/data_utils.jl")
 
 include("core/item_knn.jl")
 include("core/loss_function.jl")
+include("core/randomwalk.jl")
 include("metric.jl")
 
 include("model/base_recommender.jl")
