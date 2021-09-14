@@ -143,9 +143,14 @@ end
 @testset "Bipartite graph build" begin
     df = DataFrame(itemid = [1, 1, 2, 3, 3], userid = [1, 2, 2, 1, 2])
 
+    df_original = copy(df)
+
     adjacency_list, offsets, user2uidx, item2iidx = build_graph(df)
     @test adjacency_list == [4, 5, 5, 4, 5, 1, 3, 1, 2, 3]
     @test offsets == [1, 3, 4, 6, 8, 11]
     @test user2uidx == Dict(1 => 4, 2 => 5)
     @test item2iidx == Dict(1 => 1, 2 => 2, 3 => 3)
+
+    # check if df is mutated.
+    @test df == df_original
 end
