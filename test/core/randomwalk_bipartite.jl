@@ -1,4 +1,4 @@
-using Test
+using Test, DataFrames
 using Recommenders:
     get_degree,
     get_max_degree,
@@ -6,7 +6,8 @@ using Recommenders:
     randomwalk,
     pixie_multi_hit_boost,
     aggregate_multi_randomwalk,
-    randomwalk_multiple
+    randomwalk_multiple,
+    build_graph
 
 @testset "Get degree function." begin
     offsets = [1, 2, 4, 10]
@@ -130,4 +131,14 @@ end
         @test node in [1, 2, 3]
         @test c > 0
     end
+end
+
+@testset "Bipartite graph build" begin
+    df = DataFrame(itemid = [1, 1, 2, 3, 3], userid = [1, 2, 2, 1, 2])
+
+    adjacency_list, offsets, user2uidx, item2iidx = build_graph(df)
+    @test adjacency_list == [4, 5, 5, 4, 5, 1, 3, 1, 2, 3]
+    @test offsets == [1, 3, 4, 6, 8, 11]
+    @test user2uidx == Dict(1 => 4, 2 => 5)
+    @test item2iidx == Dict(1 => 1, 2 => 2, 3 => 3)
 end

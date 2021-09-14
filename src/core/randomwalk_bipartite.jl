@@ -129,3 +129,37 @@ function randomwalk_multiple(
         return aggregate_multi_randomwalk(visited_counts, aggregate_function)
     end
 end
+
+function build_graph(table; col_user = :userid, col_item = :itemid)
+    table, user2uidx, item2iidx, _ =
+        make_idmap(table, col_user = col_user, col_item = col_item)
+
+    n_user = length(user2uidx)
+    n_item = length(item2iidx)
+
+    df = DataFrame(table)
+
+    # nodeid = 1 - n_item: item node
+    # nodeid = (n_item + 1) - (n_item + n_user): user node
+    df[!, col_user] = df[!, col_user] .+ n_item
+    for user in keys(user2uidx)
+        user2uidx[user] = user2uidx[user] + n_item
+    end
+
+    adjacency_list = sort(df, [col_item])[!, col_user]
+    append!(adjacency_list, sort(df, [col_user])[!, col_item])
+
+    item_degrees = sort(combine(groupby(df, col_item), nrow), [col_item])[!, :nrow]
+    user_degrees = sort(combine(groupby(df, col_user), nrow), [col_user])[!, :nrow]
+
+    @assert length(adjacency_list) == sum(item_degrees) + sum(user_degrees)
+
+    offsets = Vector{Int}(undef, n_item + n_user + 1)
+    item_cumsum = cumsum(item_degrees) .+ 1
+    user_cumsum = cumsum(user_degrees) .+ item_cumsum[end]
+    offsets[1] = 1
+    offsets[2:(n_item+1)] = item_cumsum
+    offsets[(n_item+2):end] = user_cumsum
+
+    return adjacency_list, offsets, user2uidx, item2iidx
+end
