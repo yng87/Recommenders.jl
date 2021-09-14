@@ -8,7 +8,7 @@ const tests = [
     "dataset/data_utils.jl",
     "core/item_knn.jl",
     "core/loss_function.jl",
-    "core/randomwalk.jl",
+    "core/randomwalk_bipartite.jl",
     "metric.jl",
     "model/item_knn.jl",
     "model/implicit_mf.jl",
