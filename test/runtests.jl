@@ -14,6 +14,7 @@ const tests = [
     "model/implicit_mf.jl",
     "model/bpr.jl",
     "model/slim.jl",
+    "model/randomwalk.jl",
 ]
 
 for t in tests
