@@ -95,6 +95,7 @@ function randomwalk_multiple(
     total_walk_length,
     min_high_visited_candidates,
     high_visited_count_threshold,
+    pixie_walk_length_scaling = false,
     pixie_multi_hit_boosting = false,
     max_degree = nothing,
     aggregate_function = sum,
@@ -105,8 +106,15 @@ function randomwalk_multiple(
     end
 
     degrees = get_degree(offsets, query_nodeids)
-    scaling_factors = degrees .* (max_degree .- log.(degrees))
-    scaling_factors = scaling_factors / sum(scaling_factors)
+
+    if pixie_walk_length_scaling
+        scaling_factors = degrees .* (max_degree .- log.(degrees))
+        scaling_factors = scaling_factors / sum(scaling_factors)
+    else
+        scaling_factors = ones(length(query_nodeids)) / length(query_nodeids)
+    end
+
+    @assert length(query_nodeids) == length(scaling_factors)
 
     visited_counts = Vector{Dict{Int,Int}}(undef, length(query_nodeids))
 
