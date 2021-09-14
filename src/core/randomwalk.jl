@@ -1,6 +1,12 @@
 get_degree(offsets, i::Int) = offsets[i+1] - offsets[i]
 get_degree(offsets, is::Vector{Int}) = [get_degree(offsets, i) for i in is]
 
+function get_max_degree(offsets)
+    allnode = collect(1:(length(offsets)-1))
+    degrees = get_degree(offsets, allnode)
+    return max(degrees...)
+end
+
 function onewalk(adjacency_list, offsets, query_nodeid)
     degree = get_degree(offsets, query_nodeid)
     if degree == 0
@@ -51,9 +57,13 @@ function randomwalk(
     return visited_count
 end
 
-function pixie_multi_hit_boost(visited_counts::Vector{Dict{Int,Int}})::Dict{Int,Int}
-    allnodes = union(keys.(visited_counts)...)
-    boosted_visited_count = Dict(Int, Int)()
+function pixie_multi_hit_boost(visited_counts::Vector{Dict{Int,Int}})::Dict{Int,Real}
+    if length(visited_counts) == 1
+        allnodes = keys(visited_counts[1])
+    else
+        allnodes = union(keys.(visited_counts)...)
+    end
+    boosted_visited_count = Dict{Int,Real}()
     for nodeid in allnodes
         counts = get.(visited_counts, nodeid, 0)
         boosted_visited_count[nodeid] = (sum(sqrt.(counts)))^2
@@ -65,20 +75,17 @@ function aggregate_multi_randomwalk(
     visited_counts::Vector{Dict{Int,Int}},
     aggregate_function = sum,
 )::Dict{Int,Int}
-    allnodes = union(keys.(visited_counts)...)
-    total_visited_count = :Dict{Int,Int}()
+    if length(visited_counts) == 1
+        allnodes = keys(visited_counts[1])
+    else
+        allnodes = union(keys.(visited_counts)...)
+    end
+    total_visited_count = Dict{Int,Int}()
     for nodeid in allnodes
         total_visited_count[nodeid] = aggregate_function(get.(visited_counts, nodeid, 0))
     end
     return total_visited_count
 end
-
-function get_max_degree(offsets)
-    allnode = 1:(length(offsets)-1)
-    degrees = get_degree(offsets, allnode)
-    return max(degrees...)
-end
-
 
 function randomwalk_multiple(
     adjacency_list,
@@ -88,10 +95,10 @@ function randomwalk_multiple(
     total_walk_length,
     min_high_visited_candidates,
     high_visited_count_threshold,
+    pixie_multi_hit_boosting = false,
     max_degree = nothing,
     aggregate_function = sum,
-    pixie_multi_hit_boosting = false,
-)::Dict{Int,Int}
+)::Dict{Int,Real}
 
     if max_degree === nothing
         max_degree = get_max_degree(offsets)
