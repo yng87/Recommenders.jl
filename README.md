@@ -1,6 +1,6 @@
 # Recommenders.jl
-<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommenders.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommenders.jl/dev) -->
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommenders.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommenders.jl/dev)
 [![Build Status](https://github.com/yng87/Recommenders.jl/workflows/CI/badge.svg)](https://github.com/yng87/Recommenders.jl/actions)
 
 [WIP]
@@ -8,6 +8,89 @@ Collection of datasets and algorithms for recommendation from implicit feedback.
 
 - Consistent interface for fit, predict and evaluate.
 - Accepts Tables.jl - compatible data.
+
+# Usage
+## Data preparation
+`Recommenders.jl` assumes the input data as `table` - each row corresponds to one observed event. For instamce, if user of id 1 consumes item of id 100, the table row reads (1, 10) (or (1, 10, 3.5) where 3.5 is explicit feedback). 
+
+The input data structure is general `Tables.jl` - compatible data. For instance one can use CSV data
+```julia
+using CSV
+table = CSV.File(<path/to/csv>)
+```
+We also provide dataset loader for some popular datasets. For instance, Movielens 100k dataset is used by
+```julia
+using TableOperations
+using Recommenders: Movielens100k, load_dataset
+ml100k = Movielens100k()
+download(ml100k)
+rating, user, movie = load_dataset(ml100k)
+# make it implicit feedback data
+rating = rating |> TableOperations.transform(Dict(:rating=>x->1.))
+```
+Several data split methods are implemented. Below is the simple 80/20 split
+```julia
+train_table, test_table = ratio_split(rating, 0.8)
+```
+See docs for other methods.
+
+## Fit
+The models are any struct of type `<: AbstractRecommender`. The model training is performed by
+```julia
+fit!(model::AbstractRecommender, table; kwargs...)
+```
+where `kwargs` is model-dependent keyword arguments. Let's see the example of matrix factorization model
+```julia
+dim = 128
+use_bias = true
+reg_coeff = 0.01
+
+model = ImplicitMF(dim, use_bias, reg_coeff)
+
+fit!(model::ImplicitMF,
+    train_table;
+    col_user = :userid,
+    col_item = :itemid,
+    n_epochs = 32,
+    learning_rate = 0.1,
+    n_negatives = 2,
+)
+```
+
+## Predict
+Currently only user-to-item prediction is available.
+```julia
+# For single user
+userid = 1
+n = 10 # number of retrieved items
+pred = predict_u2i(
+    model,
+    userid,
+    n
+    drop_history = true, # whether to drop already consumed items
+)
+
+# For multiple users
+userids = [1, 2, 3]
+preds = predict_u2i(
+    model,
+    userids,
+    n
+    drop_history = true,
+)
+```
+
+## Evaluate
+Evaluation metrics are implemented as callable struct.
+For instance, one can evaluate nDCG@10 averaged over all users by
+```julia
+using Recommenders: MeanPrecision, MeanNDCG
+ndcg10 = MeanNDCG(10)
+
+ground_truths = [[10, 20], [10, 30], [40]]
+
+ndcg10(preds, ground_truths)
+```
 
 # Implemented algorithms
 
