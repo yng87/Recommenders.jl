@@ -11,7 +11,7 @@ makedocs(;
         canonical = "https://yng87.github.io/Recommenders.jl",
         assets = String[],
     ),
-    pages = ["Home" => "index.md"],
+    pages = ["Home" => "index.md", "Getting started" => "getting_started.md"],
 )
 
 deploydocs(; repo = "github.com/yng87/Recommenders.jl")

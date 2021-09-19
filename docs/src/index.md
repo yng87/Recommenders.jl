@@ -2,6 +2,9 @@
 CurrentModule = Recommenders
 ```
 
+```@contents
+```
+
 # Recommenders
 
 ```@index
