@@ -78,7 +78,7 @@ Perform fit! `model` on `train_table`, predict for each user in `test_table`, an
 - `model::AbstractRecommender`: model to evaluate.
 - `train_table`: any `Tables.jl`-compatible data for train.
 - `test_table`: any `Tables.jl`-compatible data for test.
-- `metric::MeanMetric`: evaluation metric.
+- `metric`: evaluation metrics, `MeanMetric` of list of `MeanMetric`.
 - `n::Int64`: number of retrieved items.
 
 # Keyword arguments
@@ -106,25 +106,6 @@ function evaluate_u2i(
 end
 
 
-"""
-    evaluate_u2i(model, train_table, test_table, metrics, n; kwargs...)
-
-Perform fit! `model` on `train_table`, predict for each user in `test_table`, and evaluate by multiple `metrics`. 
-
-# Arguments
-- `model::AbstractRecommender`: model to evaluate.
-- `train_table`: any `Tables.jl`-compatible data for train.
-- `test_table`: any `Tables.jl`-compatible data for test.
-- `metrics::Vector{MeanMetric}`: evaluation metrics.
-- `n::Int64`: number of retrieved items.
-
-# Keyword arguments
-- `drop_history::Bool`: whether to drop already consumed items from predictions.
-- any model-dependent arguments.
-
-# Return
-Evaluated metrics for `test_table`.
-"""
 function evaluate_u2i(
     model::AbstractRecommender,
     train_table,
