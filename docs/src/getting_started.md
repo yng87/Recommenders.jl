@@ -110,8 +110,9 @@ reg_coeff = 0.01
 
 model = ImplicitMF(dim, use_bias, reg_coeff)
 
-fit!(model::ImplicitMF,
-    train_table;
+fit!(
+    model,
+    train_table,
     col_user = :userid, # specify user column
     col_item = :movieid, # specify item column
     n_epochs = 3,

@@ -9,8 +9,16 @@ abstract type AbstractRecommender end
 """
     fit!(model::AbstractRecommender, table; kwargs...)
 
-Train `model` by `table`. `kwargs` is model-dependent parameters.
-`table` is any `Tables.jl`-compatible data.
+Train `model` by `table`.
+
+# Arguments
+- `model`: concrete type under `AbstractRecommender`
+- `table`: any `Tables.jl`-compatible data for train.
+
+# Keyword arguments
+- `col_user`: name of user column in `table`
+- `col_item`: name of item column in `table`
+- and other model-dependent arguments.
 """
 function fit!(model::AbstractRecommender, table; kwargs...)
     throw("Not implemented.")
@@ -20,15 +28,16 @@ end
 """
     predict_u2i(model, userid, n; kwargs...)
 
-Predict items to single user. 
+Make recommendations to user (or users). When `userid` is a collection of raw user ids, this function performs parallel predictions by `Threads.@threads`.
 
 # Arguments
 - `model::AbstractRecommender`: trained model.
-- `userid::Union{AbstractString,Int}`: userid to get predictions.
+- `userid:`: userid to get predictions. type is `AbstractString`, `Int` or their collection.
 - `n::Int64`: number of retrieved items.
 
 # Keyword arguments
 - `drop_history::Bool`: whether to drop already consumed items from predictions.
+- and other model-dependent arguments.
 
 # Return
 Vector of predicted items, ordered by descending score.
@@ -43,22 +52,6 @@ function predict_u2i(
 end
 
 
-"""
-    predict_u2i(model, userid, n; kwargs...)
-
-Predict items to single user. 
-
-# Arguments
-- `model::AbstractRecommender`: trained model.
-- `userids::Vector{Any}`: userids to get predictions.
-- `n::Int64`: number of retrieved items.
-
-# Keyword arguments
-- `drop_history::Bool`: whether to drop already consumed items from predictions.
-
-# Return
-Vector of predicted items, each element corresponds to list of predictions to the user.
-"""
 function predict_u2i(model::AbstractRecommender, userids::Vector{Any}, n::Int64; kwargs...)
     recoms = Vector{Vector{Union{AbstractString,Int}}}(undef, length(userids))
     Threads.@threads for i in eachindex(userids)
@@ -72,13 +65,13 @@ end
 """
     evaluate_u2i(model, train_table, test_table, metric, n; kwargs...)
 
-Perform fit! `model` on `train_table`, predict for each user in `test_table`, and evaluate by `metric`.
+Perform `fit!` for `model` on `train_table`, predict for each user in `test_table`, and evaluate by `metric`.
 
 # Arguments
 - `model::AbstractRecommender`: model to evaluate.
 - `train_table`: any `Tables.jl`-compatible data for train.
 - `test_table`: any `Tables.jl`-compatible data for test.
-- `metric`: evaluation metrics, `MeanMetric` of list of `MeanMetric`.
+- `metric`: evaluation metrics, `MeanMetric` or list of `MeanMetric`.
 - `n::Int64`: number of retrieved items.
 
 # Keyword arguments

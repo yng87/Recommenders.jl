@@ -1,3 +1,8 @@
+"""
+    MostPopular()
+
+Non-personalized baseline model which predicts k-most popular items in the corpus for all users.
+"""
 mutable struct MostPopular <: AbstractRecommender
     df_popular::Union{Nothing,DataFrame}
     col_item::Union{Nothing,Symbol}
@@ -5,6 +10,11 @@ mutable struct MostPopular <: AbstractRecommender
     MostPopular() = new(nothing, nothing, nothing)
 end
 
+"""
+    fit!(model::MostPopular, table; col_user = :userid, col_item = :itemid)
+
+Fit most popular model.
+"""
 function fit!(model::MostPopular, table; col_user = :userid, col_item = :itemid, kwargs...)
     df = DataFrame(table)
     model.col_item = col_item
@@ -18,6 +28,11 @@ function fit!(model::MostPopular, table; col_user = :userid, col_item = :itemid,
     return model
 end
 
+"""
+    predict_u2i(model::MostPopular, userid::Union{AbstractString,Int}, n::Int64 drop_history::Bool = false)
+
+Make `n` prediction to signle user by most popular model.
+"""
 function predict_u2i(
     model::MostPopular,
     userid::Union{AbstractString,Int},
