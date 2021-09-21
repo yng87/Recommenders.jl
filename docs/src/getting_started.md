@@ -187,3 +187,25 @@ ndcg10(preds, ground_truth)
 ```
 0.11942894185604025
 ```
+
+Note that, in `Recommenders.jl`, this whole fit → predict → evaluate process is performed by the following `evaluate_u2i` API
+```
+model = ImplicitMF(dim, use_bias, reg_coeff)
+metrics = [ndcg10]
+n = 10
+
+evaluate_u2i(
+    model,
+    train_table,
+    test_table,
+    metrics,
+    n,
+    col_user = :userid,
+    col_item = :movieid,
+    n_epochs = 3,
+    learning_rate = 0.01,
+    n_negatives = 2,
+    verbose=1,
+    drop_history = true,
+)
+```

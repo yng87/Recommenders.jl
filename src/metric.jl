@@ -170,7 +170,7 @@ Create callbale struct to compute DCG@k averaged over all predictions. DCG@k is 
 ```math
 \mathrm{DCG@k} = \sum_{i=1}^{\mathrm{min}(k, \mathrm{length}(\text{prediction}))} \frac{2^{r_i}-1}{\log(i+1)}\,,
 ```
-where ``r_i`` is the true relevance for the i-th predicted item.
+where ``r_i`` is the true relevance for the i-th predicted item (binary for implicit feedback).
 
 # Example
 
@@ -188,7 +188,7 @@ Create callbale struct to compute NDCG@k averaged over all predictions. NDCG@k i
 ```math
 \mathrm{NDCG@k} = \frac{\mathrm{DCG}@k}{\mathrm{IDCG}@k}
 ```
-where IDCG is theideal DCG, prediction sorted by true relevance. Note that if the number of ground truth items is smaller than ``k``, the predicted item list is truncated at top-``k``.
+where IDCG is the ideal DCG, prediction sorted by true relevance. Note that if the number of ground truth items is smaller than ``k``, the predicted item list is truncated to that.
 
 
 # Example
