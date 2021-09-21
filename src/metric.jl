@@ -151,7 +151,7 @@ MeanRecall(k) = MeanMetric(Recall(k))
 
 Create callbale struct to compute Precision@k averaged over all predictions. Precision@k is defined by
 ```math
-\mathrm{Precision} = \frac{|(\text{ground truth}) \cap (\text{top k prediction})|}{k}
+\mathrm{Precision@k} = \frac{|(\text{ground truth}) \cap (\text{top k prediction})|}{k}
 ```
 
 # Example
