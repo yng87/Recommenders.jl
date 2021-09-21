@@ -72,7 +72,7 @@ rating = rating |> TableOperations.transform(movieid=x->id2title[x])
 
 Since `Recommenders.jl` focus is implicit feedback dataset, we replace all the rating by unity.
 ```julia
-ating = rating |> TableOperations.transform(rating=x->1)
+rating = rating |> TableOperations.transform(rating=x->1)
 ```
 
 Finally, split the dataset to train and test. Several data split methods are implemented in `Recommenders`, and the below is simple 80/20 split.

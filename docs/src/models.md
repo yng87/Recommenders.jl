@@ -51,5 +51,5 @@ Pages   = ["src/model/slim.jl"]
 ```@autodocs
 Modules = [Recommenders]
 Order   = [:type, :function]
-Pages   = ["src/model/random_walk.jl"]
+Pages   = ["src/model/randomwalk.jl"]
 ```

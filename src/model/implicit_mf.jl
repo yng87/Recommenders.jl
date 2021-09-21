@@ -1,3 +1,24 @@
+@doc raw"""
+    ImplicitMF(dim::Int64, use_bias::Bool, reg_coeff::Float64)
+
+Matrix factorization model for implicit feedback. The predicted rating for item ``i`` by user ``u`` is expreseed as
+```math
+\hat r_{ui} = \mu + b_i + b_u + \bm u_u \cdot \bm v_i\,,
+```
+Unlike the model for explicit feedback, the model treats all the (user, item) pair in the train dataset as positive interaction with label 1, and sample negative (user, item) pairs from the corpus. Currently only the uniform item sampling is implemented. The fitting criteria is the ordinary logloss function
+```math
+    L = -r_{ui}\log(\hat r_{ui}) - (1 - r_{ui})\log(1 - \hat r_{ui}).
+```
+
+# Constructor arguments
+- `dim`: dimension of user/item vectors.
+- `use_bias`: if set to false, the bias terms (``\mu``, ``b_i``, ``b_u``) are set to zero.
+- `reg_coeff`: ``L_2`` regularization coefficients for model parameters.
+
+# References
+For instance, Rendle et. al. (2020), [Neural Collaborative Filtering vs. Matrix Factorization Revisited
+](http://arxiv.org/abs/2005.09683).
+"""
 mutable struct ImplicitMF <: AbstractRecommender
     dim::Int64
     loss::LossFunction
@@ -58,7 +79,18 @@ function sgd!(model::ImplicitMF, uidx, iidx, grad_value, lr)
 end
 
 
+"""
+    fit!(model::ImplicitMF, table, callbacks = Any[], col_user = :userid, col_item = :item_id, n_epochs = 2, learning_rate = 0.01, n_negatives = 1, verbose = -1)
 
+Fit the `ImplicitMF` model by stochastic grandient descent (with no batching).
+
+# Model-specific arguments
+- `n_epochs`: number of epochs. During one epoch, all the row in `table` is read once.
+- `learning_rate`: Learing rate.
+- `n_negatives`: Number of negative sampling per positive (user, item) pair.
+- `verbose`: If set to positive integer, the training info is printed once per `verbose`.
+- `callbacks`: Additional callback functions during SGD. One can implement, for instance, monitoring the validation metrics and the early stopping. See [Callbacks](@ref).
+"""
 function fit!(
     model::ImplicitMF,
     table;
@@ -142,6 +174,11 @@ function fit!(
 
 end
 
+@doc raw"""
+    predict_u2i(model::ImplicitMF, userid::Union{AbstractString,Int}, n::Int64;drop_history = false)
+
+Make predictions by using ``\hat r_{ui}``.
+"""
 function predict_u2i(
     model::ImplicitMF,
     userid::Union{AbstractString,Int},

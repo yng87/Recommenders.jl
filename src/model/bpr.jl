@@ -1,3 +1,16 @@
+@doc raw"""
+    BPR(dim::Int64, reg_coeff::Float64)
+
+Bayesian personalized ranking model. The model evaluates user-item triplet ``(u ,i ,j)``, which expresses "The user ``u`` prefers item ``i`` to item ``j``. Here the following matrix factoriazation model is adopted
+
+```math
+p_{uij} = \bm u_u \cdot \bm v_i - \bm u_u \cdot \bm v_j
+```
+
+# Constructor arguments
+- `dim`: dimension of user/item vectors.
+- `reg_coeff`: ``L_2`` regularization coefficients for model parameters.
+"""
 mutable struct BPR <: AbstractRecommender
     dim::Int64
     loss::LossFunction
@@ -46,7 +59,21 @@ function sgd!(model::BPR, uidx, iidx, jidx, grad_value, lr)
 end
 
 
+"""
+    fit!(model::BPR, table, callbacks = Any[], col_user = :userid, col_item = :item_id, n_epochs = 2, learning_rate = 0.01, n_negatives = 1, verbose = -1)
 
+Fit the `BPR` model by stochastic grandient descent (with no batching). Instead the learnBPR algorithm proposed by the original paper, the simple SGD with negative sampling is implemented.
+
+# Model-specific arguments
+- `n_epochs`: number of epochs. During one epoch, all the row in `table` is read once.
+- `learning_rate`: Learing rate.
+- `n_negatives`: Number of negative sampling per positive (user, item) pair.
+- `verbose`: If set to positive integer, the training info is printed once per `verbose`.
+- `callbacks`: Additional callback functions during SGD. One can implement, for instance, monitoring the validation metrics and the early stopping. See [Callbacks](@ref).
+
+# References
+Rendel et. al. (2012), [BPR: Bayesian Personalized Ranking from Implicit Feedback](http://arxiv.org/abs/1205.2618)
+"""
 function fit!(
     model::BPR,
     table;
@@ -118,6 +145,11 @@ function fit!(
 
 end
 
+@doc raw"""
+    predict_u2i(model::ImplicitMF, userid::Union{AbstractString,Int}, n::Int64;drop_history = false)
+
+Make predictions by using ``\bm u_u \cdot \bm v_i``.
+"""
 function predict_u2i(
     model::BPR,
     userid::Union{AbstractString,Int},

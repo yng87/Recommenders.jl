@@ -1,3 +1,11 @@
+"""
+    Randomwalk()
+
+Recommendation model using random walk with restart on user-item bipartite graph. Implemented algorithm is based on Pixie random walk.
+
+# References
+C.  Eksombatchai (2018), [Pixie: A System for Recommending 3+ Billion Items to 200+ Million Users in Real-Time](http://dl.acm.org/citation.cfm?doid=3178876.3186183)
+"""
 mutable struct Randomwalk <: AbstractRecommender
     adjacency_list::Union{Vector{Int},Nothing}
     offsets::Union{Vector{Int},Nothing}
@@ -11,6 +19,11 @@ mutable struct Randomwalk <: AbstractRecommender
     Randomwalk() = new(nothing, nothing, nothing, nothing, nothing, nothing, nothing)
 end
 
+"""
+    fit!(model::Randomwalk, table; col_user = :userid, col_item = :itemid)
+
+Build bipartite graph from `table`. One side of the graph collcets user nodes, and the others item nodes. If a user actions an item, an edge is added between them. The graph is undirected, and has no extra weights.
+"""
 function fit!(model::Randomwalk, table; col_user = :userid, col_item = :itemid, kwargs...)
     model.adjacency_list, model.offsets, model.user2uidx, model.item2iidx =
         build_graph(table, col_user = col_user, col_item = col_item)
@@ -28,6 +41,27 @@ function fit!(model::Randomwalk, table; col_user = :userid, col_item = :itemid, 
     model.max_degree = get_max_degree(model.offsets)
 end
 
+@doc raw"""
+    predict_u2i(model::Randomwalk, userid::Union{AbstractString,Int}, n::Int64; drop_history = false, terminate_prob = 0.1, total_walk_length = 10000, min_high_visited_candidates = Inf, high_visited_count_threshold = Inf, pixie_walk_length_scaling = false, pixie_multi_hit_boosting = false, aggregate_function = sum)
+
+Make recommendation by random walk with restart. Basic algorithm is as follows:
+
+1. Get items that are already consumed by the user (on the graph, they are connected by one step). We denote them by ``q \in Q``.
+2. Starting from each node ``q``, perform multiple random walks with certain stop probability. Record the visited count of the items on the walk. We denote the counts of item ``p`` on the walk from ``q`` by ``V_q[p]``.
+3. Finally aggregate ``V_q[p]`` to ``V[p]``, and recommeds top-counted items. Two mothods for aggregation is provided
+
+- Simple aggregation: Taking sum, ``V[p] = \sum_{q\in Q} V_q[p]``. You can also replace `sum` by, for instance, `maximum`.
+- Pixie boosting: ``V[p] = (\sum_{q\in Q} \sqrt{V_q[p]})^2``, putting more importance on the nodes visited by multiple start nodes.
+
+# model-specific arguments
+- `terminate_prob`: stop probability of one random walk
+- `total_walk_length`: total walk length over the multiple walk from ``q``'s.
+- `high_visited_count_threshold`: early stopping paramerer. Count up `high_visited_count` when the visited count of certain node reaces this threshold.
+- `min_high_visited_candidates`: early stopping parameter. Terminate the walks from some node ``q`` ifhen `high_visited_count` reaches `min_high_visited_candidates`.
+- `pixie_walk_length_scaling`: If set to true, the start node ``q`` with more degree will be given more walk length. If false, the walk length is the same over all the nodes ``q \in Q``
+- `pixie_multi_hit_boosting`: If true, pixie boosting is adopted for aggregation. If false, simple aggregation is used.
+- `aggregate_function`: function used by simple aggregation.
+"""
 function predict_u2i(
     model::Randomwalk,
     userid::Union{AbstractString,Int},

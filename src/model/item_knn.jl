@@ -16,8 +16,8 @@ where ``r_{i,u}`` is rating for item ``i`` by user ``u`` and ``h`` is the shrink
 - `weighting_at_inference`: to use above weighting at inference time.
 - `normalize_similarity`: if set to `true`, normalize each column of similarity matrix. See the Refs for detail.
 
-# Refereces
-[Item-based top-N recommendation algorithms](https://doi.org/10.1145/963770.963776), M. Deshpande and G. Karypis (2004)
+# References
+M. Deshpande and G. Karypis (2004), [Item-based top-N recommendation algorithms](https://doi.org/10.1145/963770.963776).
 """
 mutable struct ItemkNN <: AbstractRecommender
     k::Int64
