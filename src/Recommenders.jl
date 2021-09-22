@@ -1,5 +1,22 @@
 module Recommenders
 
+export AbstractRecommender,
+    fit!,
+    predict_u2i,
+    evaluate_u2i,
+    MostPopular,
+    ItemkNN,
+    ImplicitMF,
+    BPR,
+    SLIM,
+    Randomwalk,
+    MeanDCG,
+    MeanNDCG,
+    MeanPrecision,
+    MeanRecall,
+    leave_one_out_split,
+    ratio_split,
+    EvaluateValidData
 
 using HTTP,
     ZipFile,
@@ -33,7 +50,6 @@ include("model/implicit_mf.jl")
 include("model/bpr.jl")
 include("model/slim.jl")
 include("model/randomwalk.jl")
-
 
 
 end
