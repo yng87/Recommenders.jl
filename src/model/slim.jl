@@ -1,3 +1,21 @@
+@doc raw"""
+    SLIM(l1_ratio::Float64 = 0.5, λminratio::Float64 = 1e-4, k::Int = -1)
+
+Sparse linear machine for recommendation, modified with Elastic Net loss. The prediction is made by
+```math
+\hat r_{ui} = \sum_{j\neq i} w_{ij} r_{uj}
+```
+where ``r_{ui}`` is the actual rating for item ``i`` by user ``u``, and ``\hat r_{ui}`` is the predicted value. ``w_{ij}`` is the model weght matrix. See the Refs for algorithm details.
+
+# Constructor arguments
+- `l1_ratio`: ratio of coefficients between ``L_1`` and ``L_2`` losses. `l1_ratio` ``\to 0`` means the Ridge regularization, while `l1_ratio` ``\to \infty`` the Lasso loss.
+- `λminratio`: parameter which govern the strength of regularization. See the docs of `Lasso.jl`.
+- `k`: the nearest neighborhood size, similar to `ItemkNN`.
+
+# References
+- X. Ning and G. Karypis (2011), [SLIM: Sparse Linear Methods for Top-N Recommender Systems](http://glaros.dtc.umn.edu/gkhome/node/774)
+- M. Levy (2013), [Efficient Top-N Recommendation by Linear Regression](https://www.slideshare.net/MarkLevy/efficient-slides)
+"""
 mutable struct SLIM <: AbstractRecommender
     l1_ratio::Float64
     λminratio::Float64
@@ -23,6 +41,16 @@ function truncate_at_k!(w::SparseVector, k::Int)
     w[is[arg_outof_k]] .= 0
 end
 
+
+"""
+    fit!(model::SLIM, table; col_user = :userid, col_item = :itemid, col_rating = :rating, cd_tol = 1e-7, nλ = 100)
+
+Fit the SLIM model.
+
+# Model-specific arguments
+- `cd_tol`: tolerance paramerer, see `Lasso.jl`
+- `nλ`: length of regularization path, see `Lasso.jl`
+"""
 function fit!(
     model::SLIM,
     table;
@@ -76,6 +104,11 @@ function fit!(
     end
 end
 
+@doc raw"""
+    predict_u2i(model::SLIM, userid::Union{AbstractString,Int}, n::Int64;drop_history = false)
+
+Make predictions by SLIM model.
+"""
 function predict_u2i(
     model::SLIM,
     userid::Union{AbstractString,Int},

@@ -129,9 +129,75 @@ function (metric::MeanMetric)(recommend_lists, ground_truth_list)
     return result / length(recommend_lists)
 end
 
+@doc raw"""
+    MeanRecall(k)
+
+Create callbale struct to compute Recall@k averaged over all predictions. Recall@k is defined by
+```math
+\mathrm{Recall@k} = \frac{|(\text{ground truth}) \cap (\text{top k prediction})|}{|(\text{ground truth})|}
+```
+
+# Example
+
+```julia
+recall10 = MeanRecall(10)
+recall10(predictions, ground_truth)
+```
+"""
 MeanRecall(k) = MeanMetric(Recall(k))
+
+@doc raw"""
+    MeanPrecision(k)
+
+Create callbale struct to compute Precision@k averaged over all predictions. Precision@k is defined by
+```math
+\mathrm{Precision@k} = \frac{|(\text{ground truth}) \cap (\text{top k prediction})|}{k}
+```
+
+# Example
+
+```julia
+prec10 = MeanPrecision(10)
+prec10(predictions, ground_truth)
+```
+"""
 MeanPrecision(k) = MeanMetric(Precision(k))
+
+@doc raw"""
+    MeanDCG(k)
+
+Create callbale struct to compute DCG@k averaged over all predictions. DCG@k is defined by
+```math
+\mathrm{DCG@k} = \sum_{i=1}^{\mathrm{min}(k, \mathrm{length}(\text{prediction}))} \frac{2^{r_i}-1}{\log(i+1)}\,,
+```
+where ``r_i`` is the true relevance for the i-th predicted item (binary for implicit feedback).
+
+# Example
+
+```julia
+dcg10 = MeanDCG(10)
+dcg10(predictions, ground_truth)
+```
+"""
 MeanDCG(k) = MeanMetric(DCG(k))
+
+@doc raw"""
+    MeanNDCG(k)
+
+Create callbale struct to compute NDCG@k averaged over all predictions. NDCG@k is defined by
+```math
+\mathrm{NDCG@k} = \frac{\mathrm{DCG}@k}{\mathrm{IDCG}@k}
+```
+where IDCG is the ideal DCG, prediction sorted by true relevance. Note that if the number of ground truth items is smaller than ``k``, the predicted item list is truncated to that.
+
+
+# Example
+
+```julia
+ndcg10 = MeanNDCG(10)
+ndcg10(predictions, ground_truth)
+```
+"""
 MeanNDCG(k) = MeanMetric(NDCG(k))
 
 name(metric::MeanMetric) = Symbol(metric.base_metric.name, metric.base_metric.k)

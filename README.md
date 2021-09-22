@@ -1,13 +1,14 @@
 # Recommenders.jl
-<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommenders.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommenders.jl/dev) -->
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://yng87.github.io/Recommenders.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://yng87.github.io/Recommenders.jl/dev)
 [![Build Status](https://github.com/yng87/Recommenders.jl/workflows/CI/badge.svg)](https://github.com/yng87/Recommenders.jl/actions)
 
-[WIP]
-Collection of datasets and algorithms for recommendation from implicit feedback.
+This package aims to provide light-weight recommendation models, mainly for implicit feedback data. We want to provide
+- consistent interface for model training and inference
+- flexibility for input data with `Tables.jl` package, which offers simple, but powerful abstract interface for tabular data
+- robust baseline metrics for classic datasets. The comparison of advanced recommendation models to these baselines turns out to be challenge.
 
-- Consistent interface for fit, predict and evaluate.
-- Accepts Tables.jl - compatible data.
+See [Getting started](@ref) for the usage.
 
 # Implemented algorithms
 
