@@ -146,7 +146,7 @@ function fit!(
 end
 
 @doc raw"""
-    predict_u2i(model::ImplicitMF, userid::Union{AbstractString,Int}, n::Int64;drop_history = false)
+    predict_u2i(model::BPR, userid::Union{AbstractString,Int}, n::Int64;drop_history = false)
 
 Make predictions by using ``\bm u_u \cdot \bm v_i``.
 """
