@@ -24,7 +24,7 @@ prec2(recommends, ground_truth)
 # 0.75
 ```
 
-Currently the following metrics are implemented.
+Currently the following metrics are implemented. They are all descendent of `MeanMetric` type.
 ```@autodocs
 Modules = [Recommenders]
 Order   = [:type, :function]

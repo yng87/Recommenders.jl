@@ -1,3 +1,12 @@
+"""
+    leave_one_out_split(table; col_user = :userid, col_time = :timestamp)
+
+Leave-one-out split for the input `table`. For each user, whose column is specifed by `col_user`, the consumed items is sorted by `col_time`, and the last one is split into the test set. The others remain in the train set.
+
+# Returns
+- `train_table`
+- `test_table`
+"""
 function leave_one_out_split(table; col_user = :userid, col_time = :timestamp)
     last_action = Dict()
     for row in Tables.rows(table)
@@ -20,6 +29,15 @@ function leave_one_out_split(table; col_user = :userid, col_time = :timestamp)
     return m(train_table), m(test_table)
 end
 
+"""
+    ratio_split(table, train_ratio = 0.7)
+
+Split the `table` randomly, with the train set ratio specifed by `train_ratio` argument. Current implementaion assumes `table` object that can be converted to `DataFrame`.
+
+# Returns
+- `train_table`
+- `test_table`
+"""
 function ratio_split(table, train_ratio = 0.7)
     (train_ratio < 0 || train_ratio > 1) &&
         throw(ArgumentError("train_ratio must be between 0 and 1."))

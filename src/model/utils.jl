@@ -34,6 +34,37 @@ function (cb::LogTrainLoss)(model::AbstractRecommender, train_loss, epoch, verbo
     end
 end
 
+"""
+    EvaluateValidData(valid_metric::MeanMetric, valid_table, early_stopping_rounds, name = "val_metric")
+
+Callback to monitor the validation metrics during training, and raise `StopTrain` exception if early stopping is requred.
+
+# Constructor arguments
+- `valid_metric`: monotring metric. See [Evaluation metrics](@ref) for the available ones.
+- `valid_table`: any `Tables.jl`-compatible object for validation dataset.
+- `early_stopping_rounds`: If the validation metric does not improve more than this epoches, the early stopping is invoked. If set to be less than 1, no early stopping is applied.
+- `name`: metrics name to show on logger.
+
+# Example
+Use in the matrix factorizaion training.
+```julia
+ndcg10 = MeanNDCG(10)
+cb = EvaluateValidData(ndcg10, test_table, 1, "val_NDCG")
+
+model = ImplicitMF(16, true, 0.01)
+fit!(
+    model,
+    train_table,
+    10,
+    callbacks = [cb],
+    col_item = :movieid,
+    n_epochs = 20,
+    n_negatives = 1,
+    learning_rate = 0.01,
+    verbose = 1,
+)
+```
+"""
 mutable struct EvaluateValidData <: AbstractCallback
     valid_metric::MeanMetric
     name::Union{AbstractString,Symbol}
