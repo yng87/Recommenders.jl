@@ -11,7 +11,7 @@ recommends = [
 # Ground truth item ids corresponding to each recommendation
 ground_truth = [
     [1],
-    [2, 5]
+    [4, 5]
 ]
 ```
 The Precision@2 for the first entry is ``1/2=0.5``, while the second is ``2/2=1``. Therefore, the mean Precision@2 is ``0.75``.
