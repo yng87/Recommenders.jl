@@ -8,7 +8,7 @@ This package aims to provide light-weight recommendation models, mainly for impl
 - flexibility for input data with `Tables.jl` package, which offers simple, but powerful abstract interface for tabular data
 - robust baseline metrics for classic datasets. The comparison of advanced recommendation models to these baselines turns out to be challenge.
 
-See [Getting started](@ref) for the usage.
+See [Getting started](https://yng87.github.io/Recommenders.jl/stable/getting_started/) for the usage.
 
 # Implemented algorithms
 
