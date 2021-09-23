@@ -1,5 +1,0 @@
-[ Info: fmin: 100 / 100 trials carried out
-    [ Info: Successfully completed fmin
-    [ Info: Dict{Symbol, Any}(:pixie_walk_length_scaling => false, :pixie_multi_hit_boosting => false, :terminate_prob => 0.9, :total_walk_length => 712047.3772355135, :min_high_visited_candidates => 100, :high_visited_count_threshold => Inf)
-    [ Info: Evaluate best model.
-    [ Info: (ndcg10 = 0.26646874993501374, precision10 = 0.23139592647789434, recall10 = 0.097290806700832)
