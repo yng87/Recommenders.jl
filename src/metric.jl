@@ -188,7 +188,7 @@ Create callbale struct to compute NDCG@k averaged over all predictions. NDCG@k i
 ```math
 \mathrm{NDCG@k} = \frac{\mathrm{DCG}@k}{\mathrm{IDCG}@k}
 ```
-where IDCG is the ideal DCG, prediction sorted by true relevance. Note that if the number of ground truth items is smaller than ``k``, the predicted item list is truncated to that.
+where IDCG is the ideal DCG, prediction sorted by true relevance. Note that if the number of ground truth items is smaller than ``k``, the predicted item list is truncated to that length.
 
 
 # Example

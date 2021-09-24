@@ -47,17 +47,16 @@ end
 Make recommendation by random walk with restart. Basic algorithm is as follows:
 
 1. Get items that are already consumed by the user (on the graph, they are connected by one step). We denote them by ``q \in Q``.
-2. Starting from each node ``q``, perform multiple random walks with certain stop probability. Record the visited count of the items on the walk. We denote the counts of item ``p`` on the walk from ``q`` by ``V_q[p]``.
-3. Finally aggregate ``V_q[p]`` to ``V[p]``, and recommeds top-counted items. Two mothods for aggregation is provided
-
+2. Starting from each node ``q \in Q``, perform multiple random walks with certain stop probability. Record the visited count of the items on the walk. We denote the counts of item ``p`` on the walk from ``q`` by ``V_q[p]``.
+3. Finally aggregate ``V_q[p]`` to ``V[p]``, and recommeds top-scored items. Two mothods for aggregation are provided
 - Simple aggregation: Taking sum, ``V[p] = \sum_{q\in Q} V_q[p]``. You can also replace `sum` by, for instance, `maximum`.
-- Pixie boosting: ``V[p] = (\sum_{q\in Q} \sqrt{V_q[p]})^2``, putting more importance on the nodes visited by multiple start nodes.
+- Pixie boosting: ``V[p] = (\sum_{q\in Q} \sqrt{V_q[p]})^2``, putting more importance on the nodes visited by ``q``s.
 
-# model-specific arguments
+# Model-specific arguments
 - `terminate_prob`: stop probability of one random walk
-- `total_walk_length`: total walk length over the multiple walk from ``q``'s.
-- `high_visited_count_threshold`: early stopping paramerer. Count up `high_visited_count` when the visited count of certain node reaces this threshold.
-- `min_high_visited_candidates`: early stopping parameter. Terminate the walks from some node ``q`` ifhen `high_visited_count` reaches `min_high_visited_candidates`.
+- `total_walk_length`: total walk length over the multiple walks from ``q``'s.
+- `high_visited_count_threshold`: early stopping paramerer. Count up `high_visited_count` when the visited count of certain node reaches this threshold.
+- `min_high_visited_candidates`: early stopping parameter. Terminate the walk from some node ``q`` if `high_visited_count` reaches `min_high_visited_candidates`.
 - `pixie_walk_length_scaling`: If set to true, the start node ``q`` with more degree will be given more walk length. If false, the walk length is the same over all the nodes ``q \in Q``
 - `pixie_multi_hit_boosting`: If true, pixie boosting is adopted for aggregation. If false, simple aggregation is used.
 - `aggregate_function`: function used by simple aggregation.

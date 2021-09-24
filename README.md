@@ -5,10 +5,10 @@
 
 This package aims to provide light-weight recommendation models, mainly for implicit feedback data. We want to provide
 - consistent interface for model training and inference
-- flexibility for input data with `Tables.jl` package, which offers simple, but powerful abstract interface for tabular data
+- flexibility for input data with [`Tables.jl`](https://github.com/JuliaData/Tables.jl) package, which offers simple, but powerful abstract interface for tabular data
 - robust baseline metrics for classic datasets. The comparison of advanced recommendation models to these baselines turns out to be challenge.
 
-See [Getting started](https://yng87.github.io/Recommenders.jl/stable/getting_started/) for the usage.
+See [Getting started](https://yng87.github.io/Recommenders.jl/stable/getting_started/) and [examples](https://github.com/yng87/Recommenders.jl/tree/master/examples).
 
 # Implemented algorithms
 
@@ -16,12 +16,14 @@ See [Getting started](https://yng87.github.io/Recommenders.jl/stable/getting_sta
 |-------|------|------|
 | Most popular | | |
 | ItemkNN | [Item-based top-<i>N</i> recommendation algorithms](https://doi.org/10.1145/963770.963776) | |
-| Matrix factorization | [Neural Collaborative Filtering vs. Matrix Factorization Revisited](http://arxiv.org/abs/2005.09683) | |
+| Matrix factorization | [Neural Collaborative Filtering vs. Matrix Factorization Revisited](http://arxiv.org/abs/2005.09683) | Implemented algorithm is only for implicit feedback. |
 | BPR MF | [BPR: Bayesian Personalized Ranking from Implicit Feedback](http://arxiv.org/abs/1205.2618) | Simple SGD with negative samping is implemented instead of the original learnBPR algorithm.|
 | SLIM ElasticNet | [Efficient Top-N Recommendation by Linear Regression](https://www.slideshare.net/MarkLevy/efficient-slides) <br /> [SLIM: Sparse Linear Methods for Top-N Recommender Systems](http://glaros.dtc.umn.edu/gkhome/node/774) | |
 | Random walk | [Pixie: A System for Recommending 3+ Billion Items to 200+ Million Users in Real-Time](http://dl.acm.org/citation.cfm?doid=3178876.3186183) | |
 
 # Evaluation
+
+Tuning and evaluation scripts are found in [examples](https://github.com/yng87/Recommenders.jl/tree/master/examples).
 ## Movielens 100k
  Random 80/20 split, treated as implicit feedback.
 

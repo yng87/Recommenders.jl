@@ -1,7 +1,7 @@
 @doc raw"""
     BPR(dim::Int64, reg_coeff::Float64)
 
-Bayesian personalized ranking model. The model evaluates user-item triplet ``(u ,i ,j)``, which expresses "The user ``u`` prefers item ``i`` to item ``j``. Here the following matrix factoriazation model is adopted
+Bayesian personalized ranking model. The model evaluates user-item triplet ``(u ,i ,j)``, which expresses "the user ``u`` prefers item ``i`` to item ``j``. Here the following matrix factoriazation model is adopted to model this relation:
 
 ```math
 p_{uij} = \bm u_u \cdot \bm v_i - \bm u_u \cdot \bm v_j
@@ -60,14 +60,14 @@ end
 
 
 """
-    fit!(model::BPR, table, callbacks = Any[], col_user = :userid, col_item = :item_id, n_epochs = 2, learning_rate = 0.01, n_negatives = 1, verbose = -1)
+    fit!(model::BPR, table; callbacks = Any[], col_user = :userid, col_item = :item_id, n_epochs = 2, learning_rate = 0.01, n_negatives = 1, verbose = -1)
 
-Fit the `BPR` model by stochastic grandient descent (with no batching). Instead the learnBPR algorithm proposed by the original paper, the simple SGD with negative sampling is implemented.
+Fit the `BPR` model by stochastic grandient descent. Instead the learnBPR algorithm proposed by the original paper, the simple SGD with negative sampling is implemented.
 
 # Model-specific arguments
 - `n_epochs`: number of epochs. During one epoch, all the row in `table` is read once.
-- `learning_rate`: Learing rate.
-- `n_negatives`: Number of negative sampling per positive (user, item) pair.
+- `learning_rate`: Learing rate of SGD.
+- `n_negatives`: Number of negative item samples per positive (user, item) pair.
 - `verbose`: If set to positive integer, the training info is printed once per `verbose`.
 - `callbacks`: Additional callback functions during SGD. One can implement, for instance, monitoring the validation metrics and the early stopping. See [Callbacks](@ref).
 
@@ -146,7 +146,7 @@ function fit!(
 end
 
 @doc raw"""
-    predict_u2i(model::BPR, userid::Union{AbstractString,Int}, n::Int64;drop_history = false)
+    predict_u2i(model::BPR, userid::Union{AbstractString,Int}, n::Int64; drop_history = false)
 
 Make predictions by using ``\bm u_u \cdot \bm v_i``.
 """

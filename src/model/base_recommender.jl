@@ -32,7 +32,7 @@ Make recommendations to user (or users). When `userid` is a collection of raw us
 
 # Arguments
 - `model::AbstractRecommender`: trained model.
-- `userid:`: userid to get predictions. type is `AbstractString`, `Int` or their collection.
+- `userid:`: user id to get predictions. type is `AbstractString`, `Int` or their collection.
 - `n::Int64`: number of retrieved items.
 
 # Keyword arguments
@@ -71,11 +71,13 @@ Perform `fit!` for `model` on `train_table`, predict for each user in `test_tabl
 - `model::AbstractRecommender`: model to evaluate.
 - `train_table`: any `Tables.jl`-compatible data for train.
 - `test_table`: any `Tables.jl`-compatible data for test.
-- `metric`: evaluation metrics, `MeanMetric` or list of `MeanMetric`.
+- `metric`: evaluation metrics, `MeanMetric` or collection of `MeanMetric`.
 - `n::Int64`: number of retrieved items.
 
 # Keyword arguments
 - `drop_history::Bool`: whether to drop already consumed items from predictions.
+- `col_user`: name of user column in `table`
+- `col_item`: name of item column in `table`
 - any model-dependent arguments.
 
 # Return

@@ -1,6 +1,6 @@
 # Evaluation metrics
 
-The performance measure of recommendation compares the each recommended item list to the ground truth items, and averages them the over whole recommendation list. Here is the example
+The performance measure of recommendation compares the each recommended item list to the ground truth items, and averages them over whole recommendation list. Here is an example
 
 ```julia
 # Two recommendation, each of which has a collection of predicted item ids with descending order of scores.

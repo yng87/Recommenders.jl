@@ -42,7 +42,7 @@ Callback to monitor the validation metrics during training, and raise `StopTrain
 # Constructor arguments
 - `valid_metric`: monotring metric. See [Evaluation metrics](@ref) for the available ones.
 - `valid_table`: any `Tables.jl`-compatible object for validation dataset.
-- `early_stopping_rounds`: If the validation metric does not improve more than this epoches, the early stopping is invoked. If set to be less than 1, no early stopping is applied.
+- `early_stopping_rounds`: If the validation metric does not improve more than this epochs, the early stopping is invoked. If set to be less than 1, no early stopping is applied.
 - `name`: metrics name to show on logger.
 
 # Example

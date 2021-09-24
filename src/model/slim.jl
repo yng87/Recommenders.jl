@@ -5,12 +5,12 @@ Sparse linear machine for recommendation, modified with Elastic Net loss. The pr
 ```math
 \hat r_{ui} = \sum_{j\neq i} w_{ij} r_{uj}
 ```
-where ``r_{ui}`` is the actual rating for item ``i`` by user ``u``, and ``\hat r_{ui}`` is the predicted value. ``w_{ij}`` is the model weght matrix. See the Refs for algorithm details.
+where ``r_{ui}`` is the actual rating for item ``i`` by user ``u``, and ``\hat r_{ui}`` is the predicted value. ``w_{ij}`` is the model weght matrix. See Refs for algorithm details. SLIM uses [`Lasso.jl`](https://github.com/JuliaStats/Lasso.jl) for optimization.
 
 # Constructor arguments
-- `l1_ratio`: ratio of coefficients between ``L_1`` and ``L_2`` losses. `l1_ratio` ``\to 0`` means the Ridge regularization, while `l1_ratio` ``\to \infty`` the Lasso loss.
-- `λminratio`: parameter which govern the strength of regularization. See the docs of `Lasso.jl`.
-- `k`: the nearest neighborhood size, similar to `ItemkNN`.
+- `l1_ratio`: ratio of coefficients between ``L_1`` and ``L_2`` losses. `l1_ratio` ``\to 0`` means the Ridge regularization, while `l1_ratio` ``\to \infty`` the Lasso.
+- `λminratio`: parameter which governs the strength of regularization. See the docs of `Lasso.jl`.
+- `k`: the nearest neighborhood size, similar to `ItemkNN`. If `k` < 1, the neigoborhood size is infinity.
 
 # References
 - X. Ning and G. Karypis (2011), [SLIM: Sparse Linear Methods for Top-N Recommender Systems](http://glaros.dtc.umn.edu/gkhome/node/774)
@@ -48,7 +48,7 @@ end
 Fit the SLIM model.
 
 # Model-specific arguments
-- `cd_tol`: tolerance paramerer, see `Lasso.jl`
+- `cd_tol`: tolerance paramerer for convergence, see `Lasso.jl`
 - `nλ`: length of regularization path, see `Lasso.jl`
 """
 function fit!(
@@ -105,7 +105,7 @@ function fit!(
 end
 
 @doc raw"""
-    predict_u2i(model::SLIM, userid::Union{AbstractString,Int}, n::Int64;drop_history = false)
+    predict_u2i(model::SLIM, userid::Union{AbstractString,Int}, n::Int64; drop_history = false)
 
 Make predictions by SLIM model.
 """

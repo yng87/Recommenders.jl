@@ -1,14 +1,14 @@
 # Getting started
 
-As an exmaple, we show how to train a Matrix factorization model on classic Movielens 100k dataset.
-We do not heavily rely on utility functions in `Recommemders.jl`, and instead make use of Julia data ecosystem.
+We show how to train a matrix factorization model on classic Movielens 100k dataset.
+Although this is a explicit feedback data with explicit user rating on movies, we treat it as implicit feedback where all the (user, movie) pairs in the dataset are regarded as positive (label=1) while the other pairs are negative (label=0).
 
 One needs to download the dataset from [official page](https://grouplens.org/datasets/movielens/100k/), and extract  data to any location you like.
 ## Data preparation
-`Recommenders.jl` assumes the input data as tabular data.
-To handle them, we rely on `Tables.jl` - abstract interface to handle all kinds of tabular objects.
+`Recommenders.jl` assumes tabular data as input.
+To handle them, we use `Tables.jl` - abstract interface to handle all kinds of tabular objects.
 
-`CSV` data, created by `CSV.jl`, is one such table object, and here we load movie rating data by using `CSV.File`:
+CSV data, created by `CSV.jl`, is one such table object. Let's load movie rating data by using `CSV.File`:
 
 ```julia
 using CSV
@@ -18,7 +18,7 @@ rating = CSV.File(
     header = [:userid, :movieid, :rating, :timestamp],
 )
 ```
-The CSV table looks like
+`rating` looks like
 ```julia
 100000-element CSV.File{false}:
  CSV.Row: (userid = 196, movieid = 242, rating = 3, timestamp = 881250949)
@@ -27,7 +27,7 @@ The CSV table looks like
  ⋮
 ```
 
-For clarity, let's replace movie ids by its title
+For clarity, let's replace movie ids by their titles:
 ```julia
 using Tables, TableOperations
 
@@ -70,12 +70,12 @@ end
 rating = rating |> TableOperations.transform(movieid=x->id2title[x])
 ```
 
-Since `Recommenders.jl` focus is implicit feedback dataset, we replace all the rating by unity.
+To treat this data as implicit feedback, we replace all the rating by unity:
 ```julia
 rating = rating |> TableOperations.transform(rating=x->1)
 ```
 
-Finally, split the dataset to train and test. Several data split methods are implemented in `Recommenders`, and the below is simple 80/20 split.
+Finally, split the dataset to train and test. Several data split methods are implemented in `Recommenders`, and the below is simple 80/20 split:
 ```julia
 using Random
 using Recommenders: ratio_split
@@ -83,7 +83,7 @@ Random.seed!(1234) # for reproducibility
 train_table, test_table = ratio_split(rating, 0.8)
 ```
 
-Check the first row entry
+Check the first row entry by
 ```julia
 for row in Tables.rows(rating)
     print(row)
@@ -104,9 +104,9 @@ Let's train the recommender model. Here we take matrix factorization model, but 
 ```julia
 using Recommenders: ImplicitMF, fit!
 
-dim = 128
-use_bias = true
-reg_coeff = 0.01
+dim = 128 # embedding dimension
+use_bias = true # use bias terms
+reg_coeff = 0.01 # L2 regularization coefficients
 
 model = ImplicitMF(dim, use_bias, reg_coeff)
 
@@ -121,14 +121,14 @@ fit!(
     verbose=1,
 )
 ```
-By setting `verbose=1`, one can see the training information.
+By setting `verbose=1`, one can see the training information:
 ```
 [ Info: epoch=1: train_loss=Inf
-[ Info: epoch=2: train_loss=0.6787517643400646
-[ Info: epoch=3: train_loss=0.5865751731700346
+[ Info: epoch=2: train_loss=0.6778364684901991
+[ Info: epoch=3: train_loss=0.5852837966181149
 ```
 ## Predict
-Let's get prediction for single user.
+Let's get prediction for single user:
 ```julia
 using Recommenders: predict_u2i
 
@@ -144,9 +144,9 @@ pred = predict_u2i(
 
 ```julia
 3-element Vector{String}:
- "Tomorrow Never Dies (1997)"
- "Return of the Jedi (1983)"
- "Star Trek: First Contact (1996)"
+ "Sneakers (1992)"
+ "Apocalypse Now (1979)"
+ "Twister (1996)"
 ```
 
 ## Evaluate
@@ -167,7 +167,7 @@ test_users = collect(keys(user_actioned_items))
 ground_truth = collect(values(user_actioned_items))
 ```
 
-Get predictions for all the user in test set
+Get predictions for all the users in test set as
 ```julia
 n = 3
 preds = predict_u2i(
@@ -181,18 +181,20 @@ Evaluation metrics are implemented as callable struct.
 For instance, one can evaluate nDCG@10 averaged over all users by
 ```julia
 using Recommenders: MeanNDCG
-ndcg10 = MeanNDCG(10)
-ndcg10(preds, ground_truth)
+ndcg3 = MeanNDCG(3)
+ndcg3(preds, ground_truth)
 ```
 ```
-0.11942894185604025
+0.11568344921472885
 ```
 
-Note that, in `Recommenders.jl`, this whole fit → predict → evaluate process is performed by the following `evaluate_u2i` API
+Note that, in `Recommenders.jl`, this whole fit → predict → evaluate process is performed by the following `evaluate_u2i` API:
 ```
+using Recommenders: evaluate_u2i
+
 model = ImplicitMF(dim, use_bias, reg_coeff)
-metrics = [ndcg10]
-n = 10
+metrics = [ndcg3]
+n = 3
 
 evaluate_u2i(
     model,

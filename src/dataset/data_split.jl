@@ -1,7 +1,7 @@
 """
     leave_one_out_split(table; col_user = :userid, col_time = :timestamp)
 
-Leave-one-out split for the input `table`. For each user, whose column is specifed by `col_user`, the consumed items is sorted by `col_time`, and the last one is split into the test set. The others remain in the train set.
+Leave-one-out split for the input `table`. For each user, whose column is specifed by `col_user`, the items are sorted by `col_time`, and the last one is split into the test set. The others remain in the train set.
 
 # Returns
 - `train_table`
