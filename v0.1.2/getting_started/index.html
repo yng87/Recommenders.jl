@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Getting started · Recommenders.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://yng87.github.io/Recommenders.jl/getting_started/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Recommenders.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Getting started</a><ul class="internal"><li><a class="tocitem" href="#Data-preparation"><span>Data preparation</span></a></li><li><a class="tocitem" href="#Fit"><span>Fit</span></a></li><li><a class="tocitem" href="#Predict"><span>Predict</span></a></li><li><a class="tocitem" href="#Evaluate"><span>Evaluate</span></a></li></ul></li><li><a class="tocitem" href="../models/">Models</a></li><li><a class="tocitem" href="../metrics/">Metrics</a></li><li><a class="tocitem" href="../utils/">Utilities</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Getting started</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Getting started</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/yng87/Recommenders.jl/blob/master/docs/src/getting_started.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Getting-started"><a class="docs-heading-anchor" href="#Getting-started">Getting started</a><a id="Getting-started-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-started" title="Permalink"></a></h1><p>We show how to train a matrix factorization model on classic Movielens 100k dataset. Although this is a explicit feedback data with explicit user rating on movies, we treat it as implicit feedback where all the (user, movie) pairs in the dataset are regarded as positive (label=1) while the other pairs are negative (label=0).</p><p>One needs to download the dataset from <a href="https://grouplens.org/datasets/movielens/100k/">official page</a>, and extract  data to any location you like.</p><h2 id="Data-preparation"><a class="docs-heading-anchor" href="#Data-preparation">Data preparation</a><a id="Data-preparation-1"></a><a class="docs-heading-anchor-permalink" href="#Data-preparation" title="Permalink"></a></h2><p><code>Recommenders.jl</code> assumes tabular data as input. To handle them, we use <code>Tables.jl</code> - abstract interface to handle all kinds of tabular objects.</p><p>CSV data, created by <code>CSV.jl</code>, is one such table object. Let&#39;s load movie rating data by using <code>CSV.File</code>:</p><pre><code class="language-julia hljs">using CSV
+rating = CSV.File(
+    joinpath(&lt;path/to/movielens100k&gt;, &quot;u.data&quot;),
+    delim = &quot;\t&quot;,
+    header = [:userid, :movieid, :rating, :timestamp],
+)</code></pre><p><code>rating</code> looks like</p><pre><code class="language-julia hljs">100000-element CSV.File{false}:
+ CSV.Row: (userid = 196, movieid = 242, rating = 3, timestamp = 881250949)
+ CSV.Row: (userid = 186, movieid = 302, rating = 3, timestamp = 891717742)
+ CSV.Row: (userid = 22, movieid = 377, rating = 1, timestamp = 878887116)
+ ⋮</code></pre><p>For clarity, let&#39;s replace movie ids by their titles:</p><pre><code class="language-julia hljs">using Tables, TableOperations
+
+movie = CSV.File(
+    joinpath(&lt;path/to/movielens100k&gt;, &quot;u.item&quot;),
+    delim = &quot;|&quot;,
+    header = [
+        :movieid,
+        :movie_title,
+        :release_date,
+        :video_release_date,
+        :IMDbURL,
+        :unknown,
+        :Action,
+        :Adventure,
+        :Animation,
+        :Childrens,
+        :Comedy,
+        :Crime,
+        :Documentary,
+        :Drama,
+        :Fantasy,
+        :FilmNoir,
+        :Horror,
+        :Musical,
+        :Mystery,
+        :Romance,
+        :SciFi,
+        :Thriller,
+        :War,
+        :Western,
+    ],
+)
+
+id2title = Dict()
+for row in Tables.rows(movie)
+    id2title[row[:movieid]] = row[:movie_title]
+end
+
+rating = rating |&gt; TableOperations.transform(movieid=x-&gt;id2title[x])</code></pre><p>To treat this data as implicit feedback, we replace all the rating by unity:</p><pre><code class="language-julia hljs">rating = rating |&gt; TableOperations.transform(rating=x-&gt;1)</code></pre><p>Finally, split the dataset to train and test. Several data split methods are implemented in <code>Recommenders</code>, and the below is simple 80/20 split:</p><pre><code class="language-julia hljs">using Random
+using Recommenders: ratio_split
+Random.seed!(1234) # for reproducibility
+train_table, test_table = ratio_split(rating, 0.8)</code></pre><p>Check the first row entry by</p><pre><code class="language-julia hljs">for row in Tables.rows(rating)
+    print(row)
+    break
+end</code></pre><pre><code class="language-julia hljs">Tables.ColumnsRow{TableOperations.Transforms{true, TableOperations.Transforms{true, CSV.File, NamedTuple{(:movieid,), Tuple{var&quot;#1#2&quot;}}}, NamedTuple{(:rating,), Tuple{var&quot;#3#4&quot;}}}}:
+ :userid           196
+ :movieid             &quot;Kolya (1996)&quot;
+ :rating             1
+ :timestamp  881250949</code></pre><h2 id="Fit"><a class="docs-heading-anchor" href="#Fit">Fit</a><a id="Fit-1"></a><a class="docs-heading-anchor-permalink" href="#Fit" title="Permalink"></a></h2><p>Let&#39;s train the recommender model. Here we take matrix factorization model, but the fit API is similar for other models.</p><pre><code class="language-julia hljs">using Recommenders: ImplicitMF, fit!
+
+dim = 128 # embedding dimension
+use_bias = true # use bias terms
+reg_coeff = 0.01 # L2 regularization coefficients
+
+model = ImplicitMF(dim, use_bias, reg_coeff)
+
+fit!(
+    model,
+    train_table,
+    col_user = :userid, # specify user column
+    col_item = :movieid, # specify item column
+    n_epochs = 3,
+    learning_rate = 0.01,
+    n_negatives = 2, # number of negatives per positive sample
+    verbose=1,
+)</code></pre><p>By setting <code>verbose=1</code>, one can see the training information:</p><pre><code class="nohighlight hljs">[ Info: epoch=1: train_loss=Inf
+[ Info: epoch=2: train_loss=0.6778364684901991
+[ Info: epoch=3: train_loss=0.5852837966181149</code></pre><h2 id="Predict"><a class="docs-heading-anchor" href="#Predict">Predict</a><a id="Predict-1"></a><a class="docs-heading-anchor-permalink" href="#Predict" title="Permalink"></a></h2><p>Let&#39;s get prediction for single user:</p><pre><code class="language-julia hljs">using Recommenders: predict_u2i
+
+userid = 10
+n = 3 # number of retrieved items
+pred = predict_u2i(
+    model,
+    userid,
+    n,
+    drop_history = true, # whether to drop already consumed items
+)</code></pre><pre><code class="language-julia hljs">3-element Vector{String}:
+ &quot;Sneakers (1992)&quot;
+ &quot;Apocalypse Now (1979)&quot;
+ &quot;Twister (1996)&quot;</code></pre><h2 id="Evaluate"><a class="docs-heading-anchor" href="#Evaluate">Evaluate</a><a id="Evaluate-1"></a><a class="docs-heading-anchor-permalink" href="#Evaluate" title="Permalink"></a></h2><p>We show how to evaluate the trained model. Let&#39;s first make test set aggregated by users</p><pre><code class="language-julia hljs">user_actioned_items = Dict()
+for row in Tables.rows(test_table)
+    uid = row[:userid]
+    iid = row[:movieid]
+    if uid in keys(user_actioned_items)
+        push!(user_actioned_items[uid], iid)
+    else
+        user_actioned_items[uid] = [iid]
+    end
+end
+test_users = collect(keys(user_actioned_items))
+ground_truth = collect(values(user_actioned_items))</code></pre><p>Get predictions for all the users in test set as</p><pre><code class="language-julia hljs">n = 3
+preds = predict_u2i(
+    model,
+    test_users,
+    n,
+    drop_history = true,
+)</code></pre><p>Evaluation metrics are implemented as callable struct. For instance, one can evaluate nDCG@10 averaged over all users by</p><pre><code class="language-julia hljs">using Recommenders: MeanNDCG
+ndcg3 = MeanNDCG(3)
+ndcg3(preds, ground_truth)</code></pre><pre><code class="nohighlight hljs">0.11568344921472885</code></pre><p>Note that, in <code>Recommenders.jl</code>, this whole fit → predict → evaluate process is performed by the following <code>evaluate_u2i</code> API:</p><pre><code class="nohighlight hljs">using Recommenders: evaluate_u2i
+
+model = ImplicitMF(dim, use_bias, reg_coeff)
+metrics = [ndcg3]
+n = 3
+
+evaluate_u2i(
+    model,
+    train_table,
+    test_table,
+    metrics,
+    n,
+    col_user = :userid,
+    col_item = :movieid,
+    n_epochs = 3,
+    learning_rate = 0.01,
+    n_negatives = 2,
+    verbose=1,
+    drop_history = true,
+)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../models/">Models »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.6 on <span class="colophon-date" title="Monday 27 September 2021 01:58">Monday 27 September 2021</span>. Using Julia version 1.6.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
