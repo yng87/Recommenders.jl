@@ -30,7 +30,7 @@ Parameters = "0.12"
 StatsBase = "0.33"
 TableOperations = "1"
 Tables = "1"
-TreeParzen = "0.2"
+TreeParzen = "0.2, 0.3"
 ZipFile = "0.9"
 julia = "1"
 
