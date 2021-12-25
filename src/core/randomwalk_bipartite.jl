@@ -7,6 +7,11 @@ function get_max_degree(offsets)
     return max(degrees...)
 end
 
+function get_neighbor(adjacency_list, offsets, nodeid)
+    degree = get_degree(offsets, nodeid)
+    adjacency_list[offsets[nodeid]:offsets[nodeid]+degree-1]
+end
+
 function onewalk(adjacency_list, offsets, query_nodeid)
     degree = get_degree(offsets, query_nodeid)
     if degree == 0
@@ -22,6 +27,7 @@ function randomwalk(
     adjacency_list,
     offsets,
     query_nodeid,
+    count_same_nodetype,
     terminate_prob,
     total_walk_length,
     min_high_visited_candidates,
@@ -37,8 +43,10 @@ function randomwalk(
 
         for _ = 1:walk_length
             current_nodeid = onewalk(adjacency_list, offsets, current_nodeid)
-            current_nodeid = onewalk(adjacency_list, offsets, current_nodeid)
-            # TODO: what if -1 returned?
+            if count_same_nodetype
+                current_nodeid = onewalk(adjacency_list, offsets, current_nodeid)
+                # TODO: what if -1 returned?
+            end
 
             if current_nodeid in keys(visited_count)
                 visited_count[current_nodeid] += 1
@@ -48,6 +56,11 @@ function randomwalk(
 
             if visited_count[current_nodeid] == high_visited_count_threshold
                 n_high_visited_candidates += 1
+            end
+
+            if !count_same_nodetype
+                current_nodeid = onewalk(adjacency_list, offsets, current_nodeid)
+                # TODO: what if -1 returned?
             end
         end
 
@@ -91,6 +104,7 @@ function randomwalk_multiple(
     adjacency_list,
     offsets,
     query_nodeids,
+    count_same_nodetype,
     terminate_prob,
     total_walk_length,
     min_high_visited_candidates,
@@ -124,6 +138,7 @@ function randomwalk_multiple(
             adjacency_list,
             offsets,
             query_nodeid,
+            count_same_nodetype,
             terminate_prob,
             this_total_walk_length,
             min_high_visited_candidates,

@@ -47,3 +47,14 @@ function predict_u2i(
     n = min(n, length(pred))
     return pred[1:n]
 end
+
+"""
+    predict_i2i(model::MostPopular, itemid::Union{AbstractString,Int}, n::Int64)
+
+Make `n` prediction for a give item by most popular model.
+"""
+function predict_i2i(model::MostPopular, itemid::Union{AbstractString,Int}, n::Int64)
+    pred = model.df_popular[!, model.col_item]
+    n = min(n, length(pred))
+    return pred[1:n]
+end

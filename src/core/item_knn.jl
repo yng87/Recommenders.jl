@@ -128,3 +128,9 @@ function predict_u2i(
     n = min(n, length(pred))
     return pred[1:n]
 end
+
+function predict_i2i(similarity::SparseMatrixCSC, iidx::Int, n::Int)
+    pred_iidx, pred_score = findnz(similarity[:, iidx])
+    n = min(n, length(pred_iidx))
+    return pred_iidx[sortperm(pred_score, rev = true)][1:n]
+end

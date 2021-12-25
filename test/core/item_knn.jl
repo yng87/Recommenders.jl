@@ -61,3 +61,11 @@ end
     # check dispatch
     @test predict_u2i(similarity, [1, 0], 1) == [2]
 end
+
+@testset "Predict item to item" begin
+    similarity = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
+    @test predict_i2i(similarity, 1, 1) == [2]
+    @test predict_i2i(similarity, 2, 1) == [1]
+    @test predict_i2i(similarity, 1, 2) == [2]
+    @test predict_i2i(similarity, 2, 2) == [1]
+end

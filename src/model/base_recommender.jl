@@ -51,8 +51,12 @@ function predict_u2i(
     throw("Not implemented.")
 end
 
-
-function predict_u2i(model::AbstractRecommender, userids::Vector{Any}, n::Int64; kwargs...)
+function predict_u2i(
+    model::AbstractRecommender,
+    userids::Vector{<:Union{AbstractString,Int}},
+    n::Int64;
+    kwargs...,
+)
     recoms = Vector{Vector{Union{AbstractString,Int}}}(undef, length(userids))
     Threads.@threads for i in eachindex(userids)
         userid = userids[i]
@@ -60,6 +64,46 @@ function predict_u2i(model::AbstractRecommender, userids::Vector{Any}, n::Int64;
     end
     return recoms
 end
+
+"""
+    predict_i2i(model, itemid, n; kwargs...)
+
+Make recommendations given an item. When `itemid` is a collection of raw item ids, this function performs parallel predictions by `Threads.@threads`.
+
+# Arguments
+- `model::AbstractRecommender`: trained model.
+- `itemid:`: item id to get predictions. type is `AbstractString`, `Int` or their collection.
+- `n::Int64`: number of retrieved items.
+
+# Keyword arguments
+- other model-dependent arguments.
+
+# Return
+Vector of predicted items, ordered by descending score.
+"""
+function predict_i2i(
+    model::AbstractRecommender,
+    itemid::Union{AbstractString,Int},
+    n::Int64;
+    kwargs...,
+)
+    throw("Not implemented")
+end
+
+function predict_i2i(
+    model::AbstractRecommender,
+    itemids::Vector{<:Union{AbstractString,Int}},
+    n::Int64;
+    kwargs...,
+)
+    recoms = Vector{Vector{Union{AbstractString,Int}}}(undef, length(itemids))
+    Threads.@threads for i in eachindex(itemids)
+        itemid = itemids[i]
+        recoms[i] = predict_i2i(model, itemid, n; kwargs...)
+    end
+    return recoms
+end
+
 
 
 """
@@ -120,4 +164,32 @@ function evaluate_u2i(
         result[Symbol(name(metric))] = metric(recoms, gts)
     end
     return NamedTuple(result)
+end
+
+"""
+    save_model(model::AbstractRecommender, filepath, overwrite = false)
+
+Save model.
+
+# Arguments
+- `model::AbstractRecommender`: model to save.
+- `filepath`: path to save the model. If the model save multiple files, this argument points to directory.
+- `overwrite`: whether to overwrite if `filepath` already exists.
+"""
+function save_model(model::AbstractRecommender, filepath, overwrite = false)
+    throw("Not implemented.")
+end
+
+
+"""
+    load_model(model::AbstractRecommender, filepath)
+
+Load model.
+
+# Arguments
+- `model::AbstractRecommender`: model to save.
+- `filepath`: path from which load the model. If the model save multiple files, this argument points to directory.
+"""
+function load_model(model::AbstractRecommender, filepath)
+    throw("Not implemented.")
 end

@@ -140,3 +140,19 @@ function predict_u2i(
     n = min(n, length(pred_items))
     return pred_items[1:n]
 end
+
+"""
+    predict_i2i(model::SLIM, itemid::Union{AbstractString,Int}, n::Int64)
+
+Make `n` prediction for a give item by SLIM model.
+"""
+function predict_i2i(model::SLIM, itemid::Union{AbstractString,Int}, n::Int64)
+    iidx = model.item2iidx[itemid]
+    pred_iidx, pred_score = findnz(model.W[:, iidx])
+    pred_iidx = pred_iidx[sortperm(pred_score, rev = true)]
+
+    pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
+
+    n = min(n, length(pred_items))
+    return pred_items[1:n]
+end
