@@ -60,12 +60,3 @@ function predict_i2i(model::MostPopular, itemid::Union{AbstractString,Int}, n::I
     n = min(n, length(pred))
     return pred[1:n]
 end
-
-# function save_model_unsafe(model::MostPopular, filepath)
-#     CSV.write(filepath, model.df_popular)
-# end
-
-# function load_model!(model::MostPopular, filepath)
-#     model.df_popular = DataFrame(CSV.File(filepath))
-#     return model
-# end
