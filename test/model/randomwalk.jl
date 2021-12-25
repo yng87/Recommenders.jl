@@ -105,3 +105,10 @@ pred_i2i = predict_i2i(
 for p in pred_i2i
     @test length(p) == 10
 end
+
+tempfile = tempname()
+save_model(model, tempfile)
+@test isfile(tempfile)
+model = load_model(tempfile)
+@test model.adjacency_list !== nothing
+@test model.offsets !== nothing
