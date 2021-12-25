@@ -61,6 +61,5 @@ end
 tempfile = tempname()
 save_model(model, tempfile)
 @test isfile(tempfile)
-model = MostPopular()
-load_model!(model, tempfile)
+model = load_model(tempfile)
 @test model.df_popular !== nothing

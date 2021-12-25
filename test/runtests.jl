@@ -10,6 +10,7 @@ const tests = [
     "core/loss_function.jl",
     "core/randomwalk_bipartite.jl",
     "metric.jl",
+    "model/most_popular.jl",
     "model/item_knn.jl",
     "model/implicit_mf.jl",
     "model/bpr.jl",

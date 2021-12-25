@@ -169,7 +169,7 @@ end
 """
     save_model(model::AbstractRecommender, filepath, overwrite = false)
 
-Save model.
+Save model by JLD2.
 
 # Arguments
 - `model::AbstractRecommender`: model to save.
@@ -185,26 +185,18 @@ function save_model(model::AbstractRecommender, filepath, overwrite = false)
         end
     end
     mkpath(dirname(filepath))
-    save_model_unsafe(model, filepath)
+    jldsave(filepath; model = model)
     return filepath
 end
 
-save_model(model::AbstractRecommender, filepath) = save_model(model, filepath, false)
-
-function save_model_unsafe(model::AbstractRecommender, filepath)
-    # save without overwrite check
-    throw("Not implemented.")
-end
-
 """
-    load_model!(model::AbstractRecommender, filepath)
+    load_model(model::AbstractRecommender, filepath)
 
-Load model.
+Load model by JLD2.
 
 # Arguments
-- `model::AbstractRecommender`: model to save.
 - `filepath`: path from which load the model. If the model save multiple files, this argument points to directory.
 """
-function load_model!(model::AbstractRecommender, filepath)
-    throw("Not implemented.")
+function load_model(filepath)
+    return load(filepath, "model")
 end
