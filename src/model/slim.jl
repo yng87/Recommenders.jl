@@ -147,6 +147,10 @@ end
 Make `n` prediction for a give item by SLIM model.
 """
 function predict_i2i(model::SLIM, itemid::Union{AbstractString,Int}, n::Int64)
+    if !(itemid in keys(model.item2iidx))
+        return []
+    end
+
     iidx = model.item2iidx[itemid]
     pred_iidx, pred_score = findnz(model.W[:, iidx])
     pred_iidx = pred_iidx[sortperm(pred_score, rev = true)]
