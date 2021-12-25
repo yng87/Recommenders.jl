@@ -65,9 +65,11 @@ function fit!(model::ItemkNN, table; kwargs...)
     col_item = get(kwargs, :col_item, :itemid)
     col_rating = get(kwargs, :col_rating, :rating)
 
+    @info "Make id map"
     table, model.user2uidx, model.item2iidx, model.iidx2item =
         make_idmap(table, col_user = col_user, col_item = col_item)
 
+    @info "To sparse"
     X = rows2sparse(
         table,
         col_user = col_user,
@@ -89,6 +91,7 @@ function fit!(model::ItemkNN, table; kwargs...)
         model.user_histories = X
     end
 
+    @info "Compute similarity."
     model.similarity = compute_similarity(
         X,
         model.k,

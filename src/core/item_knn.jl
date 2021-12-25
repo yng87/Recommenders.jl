@@ -68,6 +68,7 @@ function compute_similarity(
     # to speed up, cache non zero indices
     nonzero_I_R = [findnz(X[u, :]) for u = 1:n_users]
 
+    @info "Compute similarity by multithreading"
     Threads.@threads for j = 1:n_items
         Uj, Rj = findnz(X[:, j])
         simj = zeros(n_items)
