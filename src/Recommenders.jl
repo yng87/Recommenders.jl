@@ -19,7 +19,8 @@ export AbstractRecommender,
     MeanRecall,
     leave_one_out_split,
     ratio_split,
-    EvaluateValidData
+    EvaluateValidData,
+    make_idmap!
 
 using HTTP,
     ZipFile,
