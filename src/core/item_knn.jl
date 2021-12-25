@@ -69,7 +69,10 @@ function compute_similarity(
 
     @info "Make cache"
     # to speed up, cache non zero indices
-    nonzero_I_R = [findnz(X[u, :]) for u = 1:n_users]
+    nonzero_I_R = Vector{Tuple{Vector{Int},Vector{<:Real}}}(undef, n_users)
+    Threads.@threads for u = 1:n_users
+        nonzero_I_R[u] = findnz(X[u, :])
+    end
 
     @info "Compute similarity by multithreading"
     Threads.@threads for j = 1:n_items
