@@ -3,6 +3,7 @@ module Recommenders
 export AbstractRecommender,
     fit!,
     predict_u2i,
+    predict_i2i,
     evaluate_u2i,
     MostPopular,
     ItemkNN,

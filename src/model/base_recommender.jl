@@ -51,8 +51,12 @@ function predict_u2i(
     throw("Not implemented.")
 end
 
-
-function predict_u2i(model::AbstractRecommender, userids::Vector{Any}, n::Int64; kwargs...)
+function predict_u2i(
+    model::AbstractRecommender,
+    userids::Vector{<:Union{AbstractString,Int}},
+    n::Int64;
+    kwargs...,
+)
     recoms = Vector{Vector{Union{AbstractString,Int}}}(undef, length(userids))
     Threads.@threads for i in eachindex(userids)
         userid = userids[i]
@@ -86,7 +90,12 @@ function predict_i2i(
     throw("Not implemented")
 end
 
-function predict_i2i(model::AbstractRecommender, itemids::Vector{Any}, n::Int64; kwargs...)
+function predict_i2i(
+    model::AbstractRecommender,
+    itemids::Vector{<:Union{AbstractString,Int}},
+    n::Int64;
+    kwargs...,
+)
     recoms = Vector{Vector{Union{AbstractString,Int}}}(undef, length(itemids))
     Threads.@threads for i in eachindex(itemids)
         itemid = itemids[i]

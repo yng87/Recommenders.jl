@@ -21,7 +21,8 @@ function reindex_id_column(table, col_id::Symbol)
 end
 
 function make_u2i_dataset(table; col_user = :userid, col_item = :itemid)
-    user_actioned_items = Dict()
+    user_actioned_items =
+        Dict{Union{AbstractString,Int},Vector{Union{AbstractString,Int}}}()
     for row in Tables.rows(table)
         uid = row[col_user]
         iid = row[col_item]
