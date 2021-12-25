@@ -135,7 +135,7 @@ end
 """
     predict_i2i(model::ItemkNN, itemid::Union{AbstractString,Int}, n::Int64)
 
-Make `n` prediction for a give item by most popular model.
+Make `n` prediction for a give item by ItenkNN model.
 """
 function predict_i2i(model::ItemkNN, itemid::Union{AbstractString,Int}, n::Int64)
     iidx = model.item2iidx[itemid]
