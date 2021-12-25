@@ -51,3 +51,57 @@ result = evaluate_u2i(
 @test result[:ndcg10] >= 0
 @test result[:precision10] >= 0
 @test result[:recall10] >= 0
+
+pred_u2i = predict_u2i(
+    model,
+    1,
+    10,
+    terminate_prob = 0.5,
+    total_walk_length = 100000,
+    min_high_visited_candidates = 500,
+    high_visited_count_threshold = 4,
+    pixie_walk_length_scaling = true,
+    pixie_multi_hit_boosting = true,
+)
+@test length(pred_u2i) == 10
+
+pred_u2i = predict_u2i(
+    model,
+    [1, 10],
+    10,
+    terminate_prob = 0.5,
+    total_walk_length = 100000,
+    min_high_visited_candidates = 500,
+    high_visited_count_threshold = 4,
+    pixie_walk_length_scaling = true,
+    pixie_multi_hit_boosting = true,
+)
+for p in pred_u2i
+    @test length(p) == 10
+end
+
+pred_i2i = predict_i2i(
+    model,
+    50,
+    10,
+    terminate_prob = 0.5,
+    total_walk_length = 100000,
+    min_high_visited_candidates = 500,
+    high_visited_count_threshold = 4,
+    pixie_walk_length_scaling = true,
+)
+@test length(pred_i2i) == 10
+
+pred_i2i = predict_i2i(
+    model,
+    [1, 10],
+    10,
+    terminate_prob = 0.5,
+    total_walk_length = 100000,
+    min_high_visited_candidates = 500,
+    high_visited_count_threshold = 4,
+    pixie_walk_length_scaling = true,
+)
+for p in pred_i2i
+    @test length(p) == 10
+end

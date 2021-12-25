@@ -86,6 +86,7 @@ function predict_u2i(
         model.adjacency_list,
         model.offsets,
         query_nodeids,
+        true, # query_nodeids はアイテムノードを表す
         terminate_prob,
         total_walk_length,
         min_high_visited_candidates,
@@ -103,6 +104,71 @@ function predict_u2i(
     if drop_history
         filter!(p -> !(p in query_nodeids), pred_iidx)
     end
+
+    pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
+
+    n = min(n, length(pred_items))
+    return pred_items[1:n]
+end
+
+@doc raw"""
+    predict_i2i(model::Randomwalk, userid::Union{AbstractString,Int}, n::Int64; drop_history = false, terminate_prob = 0.1, total_walk_length = 10000, min_high_visited_candidates = Inf, high_visited_count_threshold = Inf, pixie_walk_length_scaling = false, aggregate_function = sum)
+
+    Make recommendation by random walk with restart. Basic algorithm is as follows:
+
+    1. Get users that are connected with the query item by one step. We denote them by ``q \in Q``.
+    2. Starting from each node ``q \in Q``, perform multiple random walks with certain stop probability. Record the visited count of the items on the walk. We denote the counts of item ``p`` on the walk from ``q`` by ``V_q[p]``.
+    3. Finally aggregate ``V_q[p]`` to ``V[p]``, and recommeds top-scored items. Two mothods for aggregation are provided
+    - Simple aggregation: Taking sum, ``V[p] = \sum_{q\in Q} V_q[p]``. You can also replace `sum` by, for instance, `maximum`.
+    - Pixie boosting: ``V[p] = (\sum_{q\in Q} \sqrt{V_q[p]})^2``, putting more importance on the nodes visited by ``q``s.
+
+    # Model-specific arguments
+    - `terminate_prob`: stop probability of one random walk
+    - `total_walk_length`: total walk length over the multiple walks from ``q``'s.
+    - `high_visited_count_threshold`: early stopping paramerer. Count up `high_visited_count` when the visited count of certain node reaches this threshold.
+    - `min_high_visited_candidates`: early stopping parameter. Terminate the walk from some node ``q`` if `high_visited_count` reaches `min_high_visited_candidates`.
+    - `pixie_walk_length_scaling`: If set to true, the start node ``q`` with more degree will be given more walk length. If false, the walk length is the same over all the nodes ``q \in Q``
+    - `pixie_multi_hit_boosting`: If true, pixie boosting is adopted for aggregation. If false, simple aggregation is used.
+    - `aggregate_function`: function used by simple aggregation.
+"""
+function predict_i2i(
+    model::Randomwalk,
+    itemid::Union{AbstractString,Int},
+    n::Int64;
+    terminate_prob = 0.1,
+    total_walk_length = 10000,
+    min_high_visited_candidates = Inf,
+    high_visited_count_threshold = Inf,
+    pixie_walk_length_scaling = false,
+    pixie_multi_hit_boosting = false,
+    aggregate_function = sum,
+    kwargs...,
+)
+    if !(itemid in keys(model.item2iidx))
+        return []
+    end
+
+    iidx = model.item2iidx[itemid]
+
+    query_nodeids = get_neighbor(model.adjacency_list, model.offsets, iidx)
+
+    visited_count = randomwalk_multiple(
+        model.adjacency_list,
+        model.offsets,
+        query_nodeids,
+        false, # query_nodeids はユーザーノードを表す
+        terminate_prob,
+        total_walk_length,
+        min_high_visited_candidates,
+        high_visited_count_threshold,
+        pixie_walk_length_scaling,
+        pixie_multi_hit_boosting,
+        model.max_degree,
+        aggregate_function,
+    )
+
+    sorted_idx = sortperm(collect(values(visited_count)), rev = true)
+    pred_iidx = collect(keys(visited_count))[sorted_idx]
 
     pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
 
