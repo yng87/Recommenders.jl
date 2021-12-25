@@ -169,7 +169,7 @@ end
 """
     save_model(model::AbstractRecommender, filepath, overwrite = false)
 
-Save model.
+Save model by JLD2.
 
 # Arguments
 - `model::AbstractRecommender`: model to save.
@@ -177,19 +177,26 @@ Save model.
 - `overwrite`: whether to overwrite if `filepath` already exists.
 """
 function save_model(model::AbstractRecommender, filepath, overwrite = false)
-    throw("Not implemented.")
+    if ispath(filepath)
+        if overwrite
+            rm(filepath; force = true, recursive = true)
+        else
+            throw("$(filepath) already exists.")
+        end
+    end
+    mkpath(dirname(filepath))
+    jldsave(filepath; model = model)
+    return filepath
 end
-
 
 """
     load_model(model::AbstractRecommender, filepath)
 
-Load model.
+Load model by JLD2.
 
 # Arguments
-- `model::AbstractRecommender`: model to save.
 - `filepath`: path from which load the model. If the model save multiple files, this argument points to directory.
 """
-function load_model(model::AbstractRecommender, filepath)
-    throw("Not implemented.")
+function load_model(filepath)
+    return load(filepath, "model")
 end

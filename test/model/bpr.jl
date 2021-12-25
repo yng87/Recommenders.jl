@@ -47,3 +47,10 @@ result = evaluate_u2i(
 @test result[:ndcg10] >= 0
 @test result[:precision10] >= 0
 @test result[:recall10] >= 0
+
+tempfile = tempname()
+save_model(model, tempfile)
+@test isfile(tempfile)
+model = load_model(tempfile)
+@test model.user_embedding !== nothing
+@test model.item_embedding !== nothing

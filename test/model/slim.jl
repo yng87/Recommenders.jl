@@ -65,3 +65,9 @@ pred_i2i = predict_i2i(model, [1, 10], 10)
 for p in pred_i2i
     @test length(p) == 10
 end
+
+tempfile = tempname()
+save_model(model, tempfile)
+@test isfile(tempfile)
+model = load_model(tempfile)
+@test model.W !== nothing

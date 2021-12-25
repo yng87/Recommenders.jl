@@ -5,6 +5,8 @@ export AbstractRecommender,
     predict_u2i,
     predict_i2i,
     evaluate_u2i,
+    save_model,
+    load_model,
     MostPopular,
     ItemkNN,
     ImplicitMF,
@@ -29,7 +31,8 @@ using HTTP,
     Tables,
     TableOperations,
     Lasso,
-    Distributions
+    Distributions,
+    JLD2
 import Base: download
 
 include("dataset/downloadutils.jl")
