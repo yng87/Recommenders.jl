@@ -53,16 +53,30 @@ end
     adjacency_list = [4, 5, 5, 4, 5, 1, 3, 1, 2, 3]
     offsets = [1, 3, 4, 6, 8, 11]
 
-    for node in keys(randomwalk(adjacency_list, offsets, 1, 0.1, 100, Inf, Inf))
+    # same node type
+    for node in keys(randomwalk(adjacency_list, offsets, 1, true, 0.1, 100, Inf, Inf))
         @test node in [1, 2, 3]
     end
 
-    for node in keys(randomwalk(adjacency_list, offsets, 2, 0.1, 100, 2, 10))
+    for node in keys(randomwalk(adjacency_list, offsets, 2, true, 0.1, 100, 2, 10))
         @test node in [1, 2, 3]
     end
 
-    for node in keys(randomwalk(adjacency_list, offsets, 4, 0.1, 10, 2, 10))
+    for node in keys(randomwalk(adjacency_list, offsets, 4, true, 0.1, 10, 2, 10))
         @test node in [4, 5]
+    end
+
+    # different node type
+    for node in keys(randomwalk(adjacency_list, offsets, 1, false, 0.1, 100, Inf, Inf))
+        @test node in [4, 5]
+    end
+
+    for node in keys(randomwalk(adjacency_list, offsets, 2, false, 0.1, 100, 2, 10))
+        @test node in [4, 5]
+    end
+
+    for node in keys(randomwalk(adjacency_list, offsets, 4, false, 0.1, 10, 2, 10))
+        @test node in [1, 2, 3]
     end
 end
 
@@ -104,38 +118,116 @@ end
     adjacency_list = [4, 5, 5, 4, 5, 1, 3, 1, 2, 3]
     offsets = [1, 3, 4, 6, 8, 11]
 
-    total_visited_count =
-        randomwalk_multiple(adjacency_list, offsets, [4, 5], 0.3, 100, 2, 5, false, false)
+    # same node type
+    total_visited_count = randomwalk_multiple(
+        adjacency_list,
+        offsets,
+        [4, 5],
+        true,
+        0.3,
+        100,
+        2,
+        5,
+        false,
+        false,
+    )
+    for (node, c) in total_visited_count
+        @test node in [4, 5]
+        @test c > 0
+    end
+
+    total_visited_count = randomwalk_multiple(
+        adjacency_list,
+        offsets,
+        [4, 5],
+        true,
+        0.3,
+        100,
+        2,
+        5,
+        true,
+        false,
+    )
     for (node, c) in total_visited_count
         @test node in [4, 5]
         @test c > 0
     end
 
     total_visited_count =
-        randomwalk_multiple(adjacency_list, offsets, [4, 5], 0.3, 100, 2, 5, true, false)
+        randomwalk_multiple(adjacency_list, offsets, [1], true, 0.3, 100, 2, 5, false, true)
+    for (node, c) in total_visited_count
+        @test node in [1, 2, 3]
+        @test c > 0
+    end
+
+    total_visited_count = randomwalk_multiple(
+        adjacency_list,
+        offsets,
+        [1, 3],
+        true,
+        0.3,
+        100,
+        2,
+        5,
+        true,
+        true,
+    )
+    for (node, c) in total_visited_count
+        @test node in [1, 2, 3]
+        @test c > 0
+    end
+
+    total_visited_count = randomwalk_multiple(
+        adjacency_list,
+        offsets,
+        [1, 3],
+        true,
+        0.3,
+        100,
+        2,
+        5,
+        true,
+        true,
+        3,
+    )
+    for (node, c) in total_visited_count
+        @test node in [1, 2, 3]
+        @test c > 0
+    end
+
+    # different node type
+    total_visited_count = randomwalk_multiple(
+        adjacency_list,
+        offsets,
+        [4, 5],
+        false,
+        0.3,
+        100,
+        2,
+        5,
+        false,
+        false,
+    )
+    for (node, c) in total_visited_count
+        @test node in [1, 2, 3]
+        @test c > 0
+    end
+
+    total_visited_count = randomwalk_multiple(
+        adjacency_list,
+        offsets,
+        [1, 3],
+        false,
+        0.3,
+        100,
+        2,
+        5,
+        true,
+        true,
+        3,
+    )
     for (node, c) in total_visited_count
         @test node in [4, 5]
-        @test c > 0
-    end
-
-    total_visited_count =
-        randomwalk_multiple(adjacency_list, offsets, [1], 0.3, 100, 2, 5, false, true)
-    for (node, c) in total_visited_count
-        @test node in [1, 2, 3]
-        @test c > 0
-    end
-
-    total_visited_count =
-        randomwalk_multiple(adjacency_list, offsets, [1, 3], 0.3, 100, 2, 5, true, true)
-    for (node, c) in total_visited_count
-        @test node in [1, 2, 3]
-        @test c > 0
-    end
-
-    total_visited_count =
-        randomwalk_multiple(adjacency_list, offsets, [1, 3], 0.3, 100, 2, 5, true, true, 3)
-    for (node, c) in total_visited_count
-        @test node in [1, 2, 3]
         @test c > 0
     end
 end
