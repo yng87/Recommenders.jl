@@ -55,25 +55,26 @@ mutable struct ItemkNN <: AbstractRecommender
     )
 end
 
+function make_idmap!(model, user_table, item_table; col_user = :userid, col_item = :itemid)
+    df_user = DataFrame(user_table)
+    df_item = DataFrame(item_table)
+
+    model.user2uidx = Dict(Pair.(df_user[!, col_user], df_user[!, :uidx]))
+    model.item2iidx = Dict(Pair.(df_item[!, col_item], df_item[!, :iidx]))
+    model.iidx2item = Dict(Pair.(df_item[!, :iidx], df_item[!, col_item]))
+    return
+end
+
 """
     fit!(model::ItemkNN, table; col_user = :userid, col_item = :itemid, col_rating = :rating)
 
 Fit the `ItemkNN` model. `col_rating` specifies rating column in the `table`, which will be all unity if implicit feedback data is given.
 """
 function fit!(model::ItemkNN, table; kwargs...)
-    col_user = get(kwargs, :col_user, :userid)
-    col_item = get(kwargs, :col_item, :itemid)
-    col_rating = get(kwargs, :col_rating, :rating)
-
-    table, model.user2uidx, model.item2iidx, model.iidx2item =
-        make_idmap(table, col_user = col_user, col_item = col_item)
-
-    X = rows2sparse(
-        table,
-        col_user = col_user,
-        col_item = col_item,
-        col_rating = col_rating,
-    )
+    @info "To dataframe"
+    df = DataFrame(table)
+    @info "To sparse matrix"
+    X = sparse(df[!, :uidx], df[!, :iidx], ones(nrow(df)))
 
     if !model.weighting_at_inference
         model.user_histories = X
@@ -89,6 +90,7 @@ function fit!(model::ItemkNN, table; kwargs...)
         model.user_histories = X
     end
 
+    @info "Compute similarity"
     model.similarity = compute_similarity(
         X,
         model.k,

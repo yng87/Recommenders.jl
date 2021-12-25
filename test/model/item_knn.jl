@@ -8,7 +8,8 @@ using Recommenders:
     evaluate_u2i,
     MeanPrecision,
     MeanRecall,
-    MeanNDCG
+    MeanNDCG,
+    make_idmap!
 
 ml100k = Movielens100k()
 download(ml100k)
@@ -17,15 +18,28 @@ rating, _, _ = load_dataset(ml100k)
 Random.seed!(1234);
 train_table, test_table = ratio_split(rating, 0.8)
 
+df_train = DataFrame(train_table)
+
+userids = unique(df_train[!, :userid])
+df_user = DataFrame(userid = userids, uidx = 1:length(userids))
+
+itemids = unique(df_train[!, :movieid])
+df_item = DataFrame(itemid = itemids, iidx = 1:length(itemids))
+
+model = ItemkNN(10, 0.001, :bm25, true, true, true)
+
+make_idmap!(model, df_user, df_item)
+df_train[!, :uidx] = map(x -> model.user2uidx[x], df_train[!, :userid])
+df_train[!, :iidx] = map(x -> model.item2iidx[x], df_train[!, :movieid])
+
 prec10 = MeanPrecision(10)
 recall10 = MeanRecall(10)
 ndcg10 = MeanNDCG(10)
 metrics = [prec10, recall10, ndcg10]
 
-model = ItemkNN(10, 0.001, :bm25, true, true, true)
 result = evaluate_u2i(
     model,
-    train_table,
+    df_train,
     test_table,
     metrics,
     10,
