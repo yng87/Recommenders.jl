@@ -2,6 +2,7 @@ using Test, DataFrames
 using Recommenders:
     get_degree,
     get_max_degree,
+    get_neighbor,
     onewalk,
     randomwalk,
     pixie_multi_hit_boost,
@@ -16,6 +17,26 @@ using Recommenders:
     @test get_degree(offsets, 3) == 6
     @test get_degree(offsets, [1, 3, 2]) == [1, 6, 2]
     @test get_max_degree(offsets) == 6
+end
+
+@testset "Get neighbor function." begin
+    """
+    adjacency_list
+    User:
+        1: [4, 5]
+        2: [5]
+        3: [4,5]
+    Item:
+        4: [1, 3]
+        5: [1, 2, 3]
+    """
+    adjacency_list = [4, 5, 5, 4, 5, 1, 3, 1, 2, 3]
+    offsets = [1, 3, 4, 6, 8, 11]
+    @test get_neighbor(adjacency_list, offsets, 1) == [4, 5]
+    @test get_neighbor(adjacency_list, offsets, 2) == [5]
+    @test get_neighbor(adjacency_list, offsets, 3) == [4, 5]
+    @test get_neighbor(adjacency_list, offsets, 4) == [1, 3]
+    @test get_neighbor(adjacency_list, offsets, 5) == [1, 2, 3]
 end
 
 @testset "One walk" begin

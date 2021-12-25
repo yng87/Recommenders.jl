@@ -7,6 +7,11 @@ function get_max_degree(offsets)
     return max(degrees...)
 end
 
+function get_neighbor(adjacency_list, offsets, nodeid)
+    degree = get_degree(offsets, nodeid)
+    adjacency_list[offsets[nodeid]:offsets[nodeid]+degree-1]
+end
+
 function onewalk(adjacency_list, offsets, query_nodeid)
     degree = get_degree(offsets, query_nodeid)
     if degree == 0
