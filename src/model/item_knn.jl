@@ -131,3 +131,14 @@ function predict_u2i(
         return []
     end
 end
+
+"""
+    predict_i2i(model::ItemkNN, itemid::Union{AbstractString,Int}, n::Int64)
+
+Make `n` prediction for a give item by most popular model.
+"""
+function predict_i2i(model::ItemkNN, itemid::Union{AbstractString,Int}, n::Int64)
+    iidx = model.item2iidx[itemid]
+    pred = predict_i2i(model.similarity, iidx, n)
+    return [model.iidx2item[iidx] for iidx in pred]
+end

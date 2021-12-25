@@ -40,3 +40,19 @@ result = evaluate_u2i(
 @test result[:ndcg10] >= 0
 @test result[:precision10] >= 0
 @test result[:recall10] >= 0
+
+pred_u2i = predict_u2i(model, 1, 10)
+@test length(pred_u2i) == 10
+
+pred_u2i = predict_u2i(model, [1, 10], 10)
+for p in pred_u2i
+    @test length(p) == 10
+end
+
+pred_i2i = predict_i2i(model, 1, 10)
+@test length(pred_i2i) == 10
+
+pred_i2i = predict_i2i(model, [1, 10], 10)
+for p in pred_i2i
+    @test length(p) == 10
+end
