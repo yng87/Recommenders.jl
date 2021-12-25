@@ -55,6 +55,7 @@ function compute_similarity(
         throw(ArgumentError("shrink must be 0 or positive."))
     end
 
+    @info "Prepare"
     n_users, n_items = size(X)
     topK = min(topK, n_items - 1)
 
@@ -62,9 +63,11 @@ function compute_similarity(
     simI = Vector{Int64}(undef, topK * n_items)
     simS = Vector{Float64}(undef, topK * n_items)
 
+    @info "Compute norm"
     norms = sqrt.(sum(X .^ 2, dims = 1))
     norms = dropdims(norms, dims = 1)
 
+    @info "Make cache"
     # to speed up, cache non zero indices
     nonzero_I_R = [findnz(X[u, :]) for u = 1:n_users]
 
