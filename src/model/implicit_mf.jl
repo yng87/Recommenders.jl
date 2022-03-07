@@ -56,9 +56,9 @@ end
 
 
 function predict(model::ImplicitMF, uidx, iidx)::Float64
-    pred = model.user_embedding[:, uidx]' * model.item_embedding[:, iidx]
+    pred = view(model.user_embedding, :, uidx)' * view(model.item_embedding, :, iidx)
     if model.use_bias
-        pred += model.μ + model.user_bias[uidx] + model.item_bias[iidx]
+        pred += model.μ + view(model.user_bias, uidx) + view(model.item_bias, iidx)
     end
     return pred
 end
@@ -134,10 +134,16 @@ function fit!(
         end
     end
 
+    n_sample = nothing
     for epoch = 1:n_epochs
+        if epoch == 1
+            p = ProgressUnknown("Epoch $(epoch): training...")
+        else
+            p = Progress(n_sample, 1, "Epoch $(epoch): training...")
+        end
         train_loss = 0
         n_sample = 0
-        @showprogress 1 "Epoch $(epoch): training..." for row in Tables.rows(table)
+        for row in Tables.rows(table)
             uidx = row[col_user]
 
             # update positive
@@ -149,6 +155,7 @@ function fit!(
 
             grad_value = grad(model.loss, pred, 1)
             sgd!(model, uidx, iidx, grad_value, learning_rate)
+            next!(p)
 
             # negative samples
             for _ = 1:n_negatives
@@ -160,6 +167,7 @@ function fit!(
 
                 grad_value = grad(model.loss, pred, 0)
                 sgd!(model, uidx, iidx, grad_value, learning_rate)
+                next!(p)
             end
         end
 
