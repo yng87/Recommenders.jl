@@ -23,9 +23,9 @@ mutable struct ItemkNN <: AbstractRecommender
     k::Int64
     shrink::Float64
     weighting::Union{Nothing,Symbol}
-    weighting_at_inference::Bool
     normalize::Bool
     normalize_similarity::Bool
+    include_self::Bool
 
     similarity::Any
     user_histories::Any
@@ -37,16 +37,16 @@ mutable struct ItemkNN <: AbstractRecommender
         k::Int64,
         shrink::Float64,
         weighting::Union{Nothing,Symbol},
-        weighting_at_inference::Bool,
         normalize::Bool,
         normalize_similarity::Bool,
+        include_self::Bool = true,
     ) = new(
         k,
         shrink,
         weighting,
-        weighting_at_inference,
         normalize,
         normalize_similarity,
+        include_self,
         nothing,
         nothing,
         nothing,
@@ -65,36 +65,50 @@ function fit!(model::ItemkNN, table; kwargs...)
     col_item = get(kwargs, :col_item, :itemid)
     col_rating = get(kwargs, :col_rating, :rating)
 
+    @info "Build lookup."
     table, model.user2uidx, model.item2iidx, model.iidx2item =
         make_idmap(table, col_user = col_user, col_item = col_item)
 
-    X = rows2sparse(
+    table = Tables.dictcolumntable(table)
+
+    if model.weighting == :tfidf
+        @info "Calculate TF-IDF."
+        table =
+            tfidf(table, col_user = col_user, col_item = col_item, col_rating = col_rating)
+    elseif model.weighting == :bm25
+        @info "Calculate BM25."
+        table =
+            bm25(table, col_user = col_user, col_item = col_item, col_rating = col_rating)
+    end
+
+    @info "Prepare sparse rating hisotry."
+    uidx2rated_itmes, iidx2rated_users, uidx2rating, iidx2rating = get_rating_history(
         table,
         col_user = col_user,
         col_item = col_item,
         col_rating = col_rating,
     )
 
-    if !model.weighting_at_inference
-        model.user_histories = X
+    @info "Cache user history."
+    model.user_histories = Dict{Int,SparseVector}()
+    n_items = length(keys(model.iidx2item))
+    for uidx in keys(uidx2rated_itmes)
+        rated_items = uidx2rated_itmes[uidx]
+        model.user_histories[uidx] =
+            sparsevec(rated_items, ones(length(rated_items)), n_items)
     end
 
-    if model.weighting == :tfidf
-        X = tfidf(X)
-    elseif model.weighting == :bm25
-        X = bm25(X)
-    end
-
-    if model.weighting_at_inference
-        model.user_histories = X
-    end
-
+    @info "Calculate similarity."
     model.similarity = compute_similarity(
-        X,
+        uidx2rated_itmes,
+        iidx2rated_users,
+        uidx2rating,
+        iidx2rating,
         model.k,
         model.shrink,
         model.normalize,
         model.normalize_similarity,
+        model.include_self,
     )
     return model
 end
@@ -121,7 +135,7 @@ function predict_u2i(
         uidx = model.user2uidx[userid]
         pred = predict_u2i(
             model.similarity,
-            model.user_histories[uidx, :],
+            model.user_histories[uidx],
             n,
             drop_history = drop_history,
         )

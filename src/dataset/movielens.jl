@@ -34,6 +34,7 @@ function load_inter(d::Movielens100k)
         joinpath(d.dataset_dir, "u.data"),
         delim = "\t",
         header = [:userid, :movieid, :rating, :timestamp],
+        types = Dict(:rating => Float64),
     )
     return csv
 end
@@ -100,6 +101,7 @@ function load_inter(d::Movielens1M)
         joinpath(d.dataset_dir, "ratings.dat"),
         delim = "::",
         header = [:userid, :movieid, :rating, :timestamp],
+        types = Dict(:rating => Float64),
     )
     return csv
 end
