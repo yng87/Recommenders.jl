@@ -1,20 +1,39 @@
-using Test, SparseArrays
+using Test, SparseArrays, Tables
 using Recommenders: tfidf, bm25, compute_similarity, predict_u2i
 
 @testset "TF-IDF" begin
-    inter = sparse([1, 1, 1, 2], [1, 2, 3, 3], [1.0, 3.0, 5.0, 2.0])
+    inter = Tables.dictcolumntable(
+        Dict(
+            :userid => [1, 1, 1, 2],
+            :itemid => [1, 2, 3, 3],
+            :rating => [1.0, 3.0, 5.0, 2.0],
+        ),
+    )
     idf = [3 / (3 + 1), 3 / (1 + 1)]
     idf = log.(idf)
-    expected =
-        sparse([1, 1, 1, 2], [1, 2, 3, 3], [1 * idf[1], 3 * idf[1], 5 * idf[1], 2 * idf[2]])
+    expected = Tables.dictcolumntable(
+        Dict(
+            :userid => [1, 1, 1, 2],
+            :itemid => [1, 2, 3, 3],
+            :rating => [1 * idf[1], 3 * idf[1], 5 * idf[1], 2 * idf[2]],
+        ),
+    )
     evaluated = tfidf(inter)
-    @test evaluated == expected
+    @test evaluated[:userid] == expected[:userid]
+    @test evaluated[:itemid] == expected[:itemid]
+    @test evaluated[:rating] == expected[:rating]
 end
 
 @testset "BM25" begin
     k1 = 1.2
     b = 0.75
-    inter = sparse([1, 1, 1, 2], [1, 2, 3, 3], [1.0, 3.0, 5.0, 2.0])
+    inter = Tables.dictcolumntable(
+        Dict(
+            :userid => [1, 1, 1, 2],
+            :itemid => [1, 2, 3, 3],
+            :rating => [1.0, 3.0, 5.0, 2.0],
+        ),
+    )
     idf = [(3 - 3 + 0.5) / (3 + 0.5), (3 - 1 + 0.5) / (1 + 0.5)]
     idf = log.(idf)
     dl = [1, 1, 2]
@@ -24,30 +43,44 @@ end
         (k1 + 1) / (1 + k1 * (1 - b + b * dl[2] / avgdl)),
         (k1 + 1) / (1 + k1 * (1 - b + b * dl[3] / avgdl)),
     ]
-    expected = sparse(
-        [1, 1, 1, 2],
-        [1, 2, 3, 3],
-        [
-            1 * idf[1] * dl_factor[1],
-            3 * idf[1] * dl_factor[2],
-            5 * idf[1] * dl_factor[3],
-            2 * idf[2] * dl_factor[3],
-        ],
+    expected = Tables.dictcolumntable(
+        Dict(
+            :userid => [1, 1, 1, 2],
+            :itemid => [1, 2, 3, 3],
+            :rating => [
+                1 * idf[1] * dl_factor[1],
+                3 * idf[1] * dl_factor[2],
+                5 * idf[1] * dl_factor[3],
+                2 * idf[2] * dl_factor[3],
+            ],
+        ),
     )
     evaluated = bm25(inter, k1, b)
-    @test evaluated ≈ expected
+    @test evaluated[:userid] ≈ expected[:userid]
+    @test evaluated[:itemid] ≈ expected[:itemid]
+    @test evaluated[:rating] ≈ expected[:rating]
 end
 
 @testset "Compute similarity matrix" begin
-    X = sparse([1, 1, 2, 2], [1, 2, 1, 2], [1.0, 2.0, 2.0, 1.0])
+    X = Tables.dictcolumntable(
+        Dict(
+            :userid => [1, 1, 2, 2],
+            :itemid => [1, 2, 1, 2],
+            :rating => [1.0, 2.0, 2.0, 1.0],
+        ),
+    )
     expected = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
-    evaluated = compute_similarity(X, 1, 0.0, true, false)
+    evaluated = compute_similarity(X, 1, 0.0, true, false, false)
     @test evaluated ≈ expected
 
-    evaluated = compute_similarity(X, 1, 0.0, true, true)
+    evaluated = compute_similarity(X, 1, 0.0, true, true, false)
     for c in eachcol(evaluated)
         @test sum(c) ≈ 1
     end
+
+    evaluated = compute_similarity(X, 1, 0.0, true, false, true)
+    @test evaluated[1, 1] > 0
+    @test evaluated[2, 2] > 0
 end
 
 @testset "Predict user to item" begin

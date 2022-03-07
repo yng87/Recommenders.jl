@@ -32,7 +32,8 @@ using HTTP,
     TableOperations,
     Lasso,
     Distributions,
-    JLD2
+    JLD2,
+    ProgressMeter
 import Base: download
 
 include("dataset/downloadutils.jl")

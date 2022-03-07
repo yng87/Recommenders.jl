@@ -1,8 +1,14 @@
-function tfidf(X::SparseMatrixCSC)
+function tfidf(
+    table::Tables.DictColumnTable;
+    col_user = :userid,
+    col_item = :itemid,
+    col_rating = :rating,
+)
     # item = document
     # user = term
-    U, I, R = findnz(X)
-    n_users, n_items = size(X)
+    U, I, R = table[col_user], table[col_item], table[col_rating]
+    n_users = length(unique(U))
+    n_items = length(unique(I))
 
     bincount = zeros(n_users)
     for u in U
@@ -15,12 +21,20 @@ function tfidf(X::SparseMatrixCSC)
         R[j] = R[j] * idf[U[j]]
     end
 
-    return sparse(U, I, R)
+    return Tables.dictcolumntable(Dict(col_user => U, col_item => I, col_rating => R))
 end
 
-function bm25(X::SparseMatrixCSC, k1 = 1.2, b = 0.75)
-    U, I, R = findnz(X)
-    n_users, n_items = size(X)
+function bm25(
+    table::Tables.DictColumnTable,
+    k1 = 1.2,
+    b = 0.75;
+    col_user = :userid,
+    col_item = :itemid,
+    col_rating = :rating,
+)
+    U, I, R = table[col_user], table[col_item], table[col_rating]
+    n_users = length(unique(U))
+    n_items = length(unique(I))
 
     bincount = zeros(n_users)
     for u in U
@@ -39,15 +53,19 @@ function bm25(X::SparseMatrixCSC, k1 = 1.2, b = 0.75)
         R[j] = R[j] * idf[U[j]] * (k1 + 1) / (1 + k1 * (1 - b + b * dl[I[j]] / avgdl))
     end
 
-    return sparse(U, I, R)
+    return Tables.dictcolumntable(Dict(col_user => U, col_item => I, col_rating => R))
 end
 
 function compute_similarity(
-    X::SparseMatrixCSC,
+    table::Tables.DictColumnTable,
     topK::Int,
     shrink::Float64,
     normalize::Bool,
     normalize_similarity::Bool,
+    include_self::Bool = true;
+    col_user = :userid,
+    col_item = :itemid,
+    col_rating = :rating,
 )
     # (user, item)^T * (user, item) -> (item, item)
     # Return S[i, j] where j is full items, and i is related items at topK
@@ -55,24 +73,55 @@ function compute_similarity(
         throw(ArgumentError("shrink must be 0 or positive."))
     end
 
-    n_users, n_items = size(X)
+    @info "Prepare sparse rating history..."
+    uidx2rated_itmes = Dict{Int,Vector{Int}}()
+    iidx2rated_users = Dict{Int,Vector{Int}}()
+    uidx2rating = Dict{Int,Vector{Float64}}()
+    iidx2rating = Dict{Int,Vector{Float64}}()
+    for row in Tables.rows(table)
+        uidx = row[col_user]
+        iidx = row[col_item]
+        r = row[col_rating]
+        if haskey(uidx2rated_itmes, uidx)
+            push!(uidx2rated_itmes[uidx], iidx)
+            push!(uidx2rating[uidx], r)
+        else
+            uidx2rated_itmes[uidx] = [iidx]
+            uidx2rating[uidx] = [r]
+        end
+        if haskey(iidx2rated_users, iidx)
+            push!(iidx2rated_users[iidx], uidx)
+            push!(iidx2rating[iidx], r)
+        else
+            iidx2rated_users[iidx] = [uidx]
+            iidx2rating[iidx] = [r]
+        end
+    end
+
+    I, R = table[col_item], table[col_rating]
+    n_items = length(unique(I))
+
     topK = min(topK, n_items - 1)
 
     simJ = Vector{Int64}(undef, topK * n_items)
     simI = Vector{Int64}(undef, topK * n_items)
     simS = Vector{Float64}(undef, topK * n_items)
 
-    norms = sqrt.(sum(X .^ 2, dims = 1))
-    norms = dropdims(norms, dims = 1)
+    @info "Computing norms of rating matrix..."
+    norms = zeros(n_items)
+    for (i, r) in zip(I, R)
+        norms[i] += r^2
+    end
+    norms = sqrt.(norms)
 
-    # to speed up, cache non zero indices
-    nonzero_I_R = [findnz(X[u, :]) for u = 1:n_users]
-
+    p = Progress(n_items, 1, "Computing similarity...")
     Threads.@threads for j = 1:n_items
-        Uj, Rj = findnz(X[:, j])
+        Uj = iidx2rated_users[j] # users who rated item j
+        Rj = iidx2rating[j] # its ratings
         simj = zeros(n_items)
         for (u, ruj) in zip(Uj, Rj)
-            Iu, Ri = nonzero_I_R[u]
+            Iu = uidx2rated_itmes[u] # items rated by user u
+            Ri = uidx2rating[u] # its ratings
             for (i, rui) in zip(Iu, Ri)
                 s = rui * ruj
                 if normalize
@@ -81,22 +130,24 @@ function compute_similarity(
                 simj[i] += s
             end
         end
-        arg_sort_i = sortperm(simj, rev = true)[2:topK+1]
+        if include_self
+            arg_sort_i = sortperm(simj, rev = true)[1:topK]
+        else
+            arg_sort_i = sortperm(simj, rev = true)[2:topK+1]
+        end
+        if normalize_similarity
+            # see M. Deshpande and G. Karypis (2004)
+            # https://doi.org/10.1145/963770.963776
+            simj[arg_sort_i] /= sum(simj[arg_sort_i])
+        end
         simI[(1+(j-1)*topK):j*topK] = arg_sort_i
         simS[(1+(j-1)*topK):j*topK] = simj[arg_sort_i]
         simJ[(1+(j-1)*topK):j*topK] = fill(j, length(arg_sort_i))
+
+        next!(p)
     end
 
-    similarity = sparse(simI, simJ, simS)
-
-    if normalize_similarity
-        # see M. Deshpande and G. Karypis (2004)
-        # https://doi.org/10.1145/963770.963776
-        for i = 1:size(similarity)[2]
-            similarity[:, i] /= sum(similarity[:, i])
-        end
-    end
-    return similarity
+    return sparse(simI, simJ, simS)
 end
 
 function predict_u2i(
