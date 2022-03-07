@@ -137,7 +137,7 @@ function fit!(
     for epoch = 1:n_epochs
         train_loss = 0
         n_sample = 0
-        for row in Tables.rows(table)
+        @showprogress 1 "Epoch $(epoch): training..." for row in Tables.rows(table)
             uidx = row[col_user]
 
             # update positive
