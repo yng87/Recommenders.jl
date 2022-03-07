@@ -58,7 +58,7 @@ end
 function predict(model::ImplicitMF, uidx, iidx)::Float64
     pred = view(model.user_embedding, :, uidx)' * view(model.item_embedding, :, iidx)
     if model.use_bias
-        pred += model.μ + view(model.user_bias, uidx) + view(model.item_bias, iidx)
+        pred += model.μ + model.user_bias[uidx] + model.item_bias[iidx]
     end
     return pred
 end
