@@ -69,10 +69,12 @@ end
             :rating => [1.0, 2.0, 2.0, 1.0],
         ),
     )
-    expected = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
+    # expected = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
+    expected_similar_items = [2, 1]
+    expected_similarity = [4 / (5 + 1e-6), 4 / (5 + 1e-6)]
     uidx2rated_itmes, iidx2rated_users, uidx2rating, iidx2rating = get_rating_history(X)
 
-    evaluated = compute_similarity(
+    evaluated_similar_items, evaluated_similarity = compute_similarity(
         uidx2rated_itmes,
         iidx2rated_users,
         uidx2rating,
@@ -83,9 +85,10 @@ end
         false,
         false,
     )
-    @test evaluated ≈ expected
+    @test evaluated_similar_items == expected_similar_items
+    @test evaluated_similarity ≈ expected_similarity
 
-    evaluated = compute_similarity(
+    evaluated_similar_items, evaluated_similarity = compute_similarity(
         uidx2rated_itmes,
         iidx2rated_users,
         uidx2rating,
@@ -96,11 +99,10 @@ end
         true,
         false,
     )
-    for c in eachcol(evaluated)
-        @test sum(c) ≈ 1
-    end
+    @test evaluated_similarity ≈ [1.0, 1.0]
 
-    evaluated = compute_similarity(
+    expected_similar_items = [1, 2]
+    evaluated_similar_items, evaluated_similarity = compute_similarity(
         uidx2rated_itmes,
         iidx2rated_users,
         uidx2rating,
@@ -111,26 +113,25 @@ end
         false,
         true,
     )
-    @test evaluated[1, 1] > 0
-    @test evaluated[2, 2] > 0
+    @test evaluated_similar_items == expected_similar_items
 end
 
 @testset "Predict user to item" begin
-    inter = (userid = [1, 2, 2], itemid = [1, 1, 2], rating = [1.0, 2.0, 1.0])
-    similarity = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
-    user_history = sparse([1, 0])
-    @test predict_u2i(similarity, user_history, 1) == [2]
-    @test predict_u2i(similarity, user_history, 2) == [2] # score=0 なので一個しか返らない
-    @test predict_u2i(similarity, user_history, 1, drop_history = true) == [2]
-    @test predict_u2i(similarity, user_history, 2, drop_history = true) == [2]
-    # check dispatch
-    @test predict_u2i(similarity, [1, 0], 1) == [2]
+    similar_items = [2, 1]
+    similarity = [4 / (5 + 1e-6), 4 / (5 + 1e-6)]
+    user_history = [1]
+    @test predict_u2i(similar_items, similarity, user_history, 1, 1) == [2]
+    @test predict_u2i(similar_items, similarity, user_history, 1, 2) == [2] # score=0 なので一個しか返らない
+    @test predict_u2i(similar_items, similarity, user_history, 1, 1, drop_history = true) ==
+          [2]
+    @test predict_u2i(similar_items, similarity, user_history, 1, 2, drop_history = true) ==
+          [2]
 end
 
 @testset "Predict item to item" begin
-    similarity = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
-    @test predict_i2i(similarity, 1, 1) == [2]
-    @test predict_i2i(similarity, 2, 1) == [1]
-    @test predict_i2i(similarity, 1, 2) == [2]
-    @test predict_i2i(similarity, 2, 2) == [1]
+    similar_items = [2, 1]
+    @test predict_i2i(similar_items, 1, 1, 1) == [2]
+    @test predict_i2i(similar_items, 2, 1, 1) == [1]
+    @test predict_i2i(similar_items, 1, 1, 2) == [2]
+    @test predict_i2i(similar_items, 2, 1, 2) == [1]
 end

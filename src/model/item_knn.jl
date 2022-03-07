@@ -27,11 +27,12 @@ mutable struct ItemkNN <: AbstractRecommender
     normalize_similarity::Bool
     include_self::Bool
 
-    similarity::Any
-    user_histories::Any
-    user2uidx::Union{Dict,Nothing}
-    item2iidx::Union{Dict,Nothing}
-    iidx2item::Union{Dict,Nothing}
+    similar_items::Vector{Int}
+    similarity_scores::Vector{Float64}
+    user_histories::Dict{Int,Vector{Int}}
+    user2uidx::Dict{Int,Int}
+    item2iidx::Dict{Int,Int}
+    iidx2item::Dict{Int,Int}
 
     ItemkNN(
         k::Int64,
@@ -47,11 +48,12 @@ mutable struct ItemkNN <: AbstractRecommender
         normalize,
         normalize_similarity,
         include_self,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
+        Int[],
+        Float64[],
+        Dict(),
+        Dict(),
+        Dict(),
+        Dict(),
     )
 end
 
@@ -94,12 +96,11 @@ function fit!(model::ItemkNN, table; kwargs...)
     n_items = length(keys(model.iidx2item))
     for uidx in keys(uidx2rated_itmes)
         rated_items = uidx2rated_itmes[uidx]
-        model.user_histories[uidx] =
-            sparsevec(rated_items, ones(length(rated_items)), n_items)
+        model.user_histories[uidx] = rated_items
     end
 
     @debug "Calculate similarity."
-    model.similarity = compute_similarity(
+    model.similar_items, model.similarity_scores = compute_similarity(
         uidx2rated_itmes,
         iidx2rated_users,
         uidx2rating,
@@ -134,8 +135,10 @@ function predict_u2i(
     if userid in keys(model.user2uidx)
         uidx = model.user2uidx[userid]
         pred = predict_u2i(
-            model.similarity,
+            model.similar_items,
+            model.similarity_scores,
             model.user_histories[uidx],
+            model.k,
             n,
             drop_history = drop_history,
         )
@@ -157,6 +160,6 @@ function predict_i2i(model::ItemkNN, itemid::Union{AbstractString,Int}, n::Int64
     end
 
     iidx = model.item2iidx[itemid]
-    pred = predict_i2i(model.similarity, iidx, n)
+    pred = predict_i2i(model.similar_items, iidx, model.k, n)
     return [model.iidx2item[iidx] for iidx in pred]
 end

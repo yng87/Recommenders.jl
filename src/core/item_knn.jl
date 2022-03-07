@@ -148,12 +148,12 @@ function compute_similarity(
         end
         simI[(1+(j-1)*topK):j*topK] = arg_sort_i
         simS[(1+(j-1)*topK):j*topK] = simj[arg_sort_i]
-        simJ[(1+(j-1)*topK):j*topK] = fill(j, length(arg_sort_i))
+        # simJ[(1+(j-1)*topK):j*topK] = fill(j, length(arg_sort_i))
 
         next!(p)
     end
 
-    return sparse(simI, simJ, simS)
+    return simI, simS
 end
 
 function predict_u2i(
@@ -186,8 +186,38 @@ function predict_u2i(
     return pred[1:n]
 end
 
-function predict_i2i(similarity::SparseMatrixCSC, iidx::Int, n::Int)
-    pred_iidx, pred_score = findnz(similarity[:, iidx])
-    n = min(n, length(pred_iidx))
-    return pred_iidx[sortperm(pred_score, rev = true)][1:n]
+function predict_u2i(
+    similar_items::Vector{Int},
+    similarity_scores::Vector{Float64},
+    user_rated_itmes::Vector{Int},
+    topk::Int,
+    n::Int64;
+    drop_history::Bool = false,
+)
+    d = Dict()
+    for j in user_rated_itmes
+        similar_to_j = (1+(j-1)*topk):j*topk
+        for (iidx, score) in
+            zip(similar_items[similar_to_j], similarity_scores[similar_to_j])
+            if drop_history && j == iidx
+                continue
+            end
+            if haskey(d, iidx)
+                d[iidx] += score
+            else
+                d[iidx] = score
+            end
+        end
+    end
+    preds = collect(keys(d))
+    scores = collect(values(d))
+    n = min(n, length(preds))
+    return preds[sortperm(scores, rev = true)][1:n]
+end
+
+function predict_i2i(sorted_similar_items::Vector{Int}, iidx::Int, topk::Int, n::Int)
+    similar_to_j = (1+(iidx-1)*topk):iidx*topk
+    preds = sorted_similar_items[similar_to_j]
+    n = min(n, length(preds))
+    return preds[1:n]
 end
