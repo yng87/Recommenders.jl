@@ -35,7 +35,8 @@ result = evaluate_u2i(
     drop_history = true,
 )
 
-@test !(model.similarity === nothing)
+@test length(model.similar_items) > 0
+@test length(model.similarity_scores) > 0
 
 @test result[:ndcg10] >= 0
 @test result[:precision10] >= 0
@@ -61,4 +62,5 @@ tempfile = tempname()
 save_model(model, tempfile)
 @test isfile(tempfile)
 model = load_model(tempfile)
-@test model.similarity !== nothing
+@test length(model.similar_items) > 0
+@test length(model.similarity_scores) > 0

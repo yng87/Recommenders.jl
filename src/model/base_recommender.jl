@@ -58,9 +58,11 @@ function predict_u2i(
     kwargs...,
 )
     recoms = Vector{Vector{Union{AbstractString,Int}}}(undef, length(userids))
+    p = Progress(length(userids), 1, "U2I predict...")
     Threads.@threads for i in eachindex(userids)
         userid = userids[i]
         recoms[i] = predict_u2i(model, userid, n; kwargs...)
+        next!(p)
     end
     return recoms
 end
@@ -97,9 +99,11 @@ function predict_i2i(
     kwargs...,
 )
     recoms = Vector{Vector{Union{AbstractString,Int}}}(undef, length(itemids))
+    p = Progress(length(itemids), 1, "I2I predict...")
     Threads.@threads for i in eachindex(itemids)
         itemid = itemids[i]
         recoms[i] = predict_i2i(model, itemid, n; kwargs...)
+        next!(p)
     end
     return recoms
 end
