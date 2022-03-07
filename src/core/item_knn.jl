@@ -56,24 +56,12 @@ function bm25(
     return Tables.dictcolumntable(Dict(col_user => U, col_item => I, col_rating => R))
 end
 
-function compute_similarity(
-    table::Tables.DictColumnTable,
-    topK::Int,
-    shrink::Float64,
-    normalize::Bool,
-    normalize_similarity::Bool,
-    include_self::Bool = true;
+function get_rating_history(
+    table::Tables.DictColumnTable;
     col_user = :userid,
     col_item = :itemid,
     col_rating = :rating,
 )
-    # (user, item)^T * (user, item) -> (item, item)
-    # Return S[i, j] where j is full items, and i is related items at topK
-    if shrink < 0
-        throw(ArgumentError("shrink must be 0 or positive."))
-    end
-
-    @info "Prepare sparse rating history..."
     uidx2rated_itmes = Dict{Int,Vector{Int}}()
     iidx2rated_users = Dict{Int,Vector{Int}}()
     uidx2rating = Dict{Int,Vector{Float64}}()
@@ -98,8 +86,27 @@ function compute_similarity(
         end
     end
 
-    I, R = table[col_item], table[col_rating]
-    n_items = length(unique(I))
+    return uidx2rated_itmes, iidx2rated_users, uidx2rating, iidx2rating
+end
+
+function compute_similarity(
+    uidx2rated_itmes::Dict{Int,Vector{Int}},
+    iidx2rated_users::Dict{Int,Vector{Int}},
+    uidx2rating::Dict{Int,Vector{Float64}},
+    iidx2rating::Dict{Int,Vector{Float64}},
+    topK::Int,
+    shrink::Float64,
+    normalize::Bool,
+    normalize_similarity::Bool,
+    include_self::Bool = true,
+)
+    # (user, item)^T * (user, item) -> (item, item)
+    # Return S[i, j] where j is full items, and i is related items at topK
+    if shrink < 0
+        throw(ArgumentError("shrink must be 0 or positive."))
+    end
+
+    n_items = length(keys(iidx2rated_users))
 
     topK = min(topK, n_items - 1)
 
@@ -109,10 +116,9 @@ function compute_similarity(
 
     @info "Computing norms of rating matrix..."
     norms = zeros(n_items)
-    for (i, r) in zip(I, R)
-        norms[i] += r^2
+    for iidx in keys(iidx2rating)
+        norms[iidx] += sqrt(sum(iidx2rating[iidx] .^ 2))
     end
-    norms = sqrt.(norms)
 
     p = Progress(n_items, 1, "Computing similarity...")
     Threads.@threads for j = 1:n_items

@@ -1,5 +1,5 @@
 using Test, SparseArrays, Tables
-using Recommenders: tfidf, bm25, compute_similarity, predict_u2i
+using Recommenders: tfidf, bm25, get_rating_history, compute_similarity, predict_u2i
 
 @testset "TF-IDF" begin
     inter = Tables.dictcolumntable(
@@ -70,15 +70,47 @@ end
         ),
     )
     expected = sparse([2, 1], [1, 2], [4 / (5 + 1e-6), 4 / (5 + 1e-6)])
-    evaluated = compute_similarity(X, 1, 0.0, true, false, false)
+    uidx2rated_itmes, iidx2rated_users, uidx2rating, iidx2rating = get_rating_history(X)
+
+    evaluated = compute_similarity(
+        uidx2rated_itmes,
+        iidx2rated_users,
+        uidx2rating,
+        iidx2rating,
+        1,
+        0.0,
+        true,
+        false,
+        false,
+    )
     @test evaluated ≈ expected
 
-    evaluated = compute_similarity(X, 1, 0.0, true, true, false)
+    evaluated = compute_similarity(
+        uidx2rated_itmes,
+        iidx2rated_users,
+        uidx2rating,
+        iidx2rating,
+        1,
+        0.0,
+        true,
+        true,
+        false,
+    )
     for c in eachcol(evaluated)
         @test sum(c) ≈ 1
     end
 
-    evaluated = compute_similarity(X, 1, 0.0, true, false, true)
+    evaluated = compute_similarity(
+        uidx2rated_itmes,
+        iidx2rated_users,
+        uidx2rating,
+        iidx2rating,
+        1,
+        0.0,
+        true,
+        false,
+        true,
+    )
     @test evaluated[1, 1] > 0
     @test evaluated[2, 2] > 0
 end
