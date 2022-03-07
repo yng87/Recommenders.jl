@@ -114,7 +114,7 @@ function compute_similarity(
     simI = Vector{Int64}(undef, topK * n_items)
     simS = Vector{Float64}(undef, topK * n_items)
 
-    @info "Computing norms of rating matrix..."
+    @debug "Computing norms of rating matrix..."
     norms = zeros(n_items)
     for iidx in keys(iidx2rating)
         norms[iidx] += sqrt(sum(iidx2rating[iidx] .^ 2))

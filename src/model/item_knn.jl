@@ -65,23 +65,23 @@ function fit!(model::ItemkNN, table; kwargs...)
     col_item = get(kwargs, :col_item, :itemid)
     col_rating = get(kwargs, :col_rating, :rating)
 
-    @info "Build lookup."
+    @debug "Build lookup."
     table, model.user2uidx, model.item2iidx, model.iidx2item =
         make_idmap(table, col_user = col_user, col_item = col_item)
 
     table = Tables.dictcolumntable(table)
 
     if model.weighting == :tfidf
-        @info "Calculate TF-IDF."
+        @debug "Calculate TF-IDF."
         table =
             tfidf(table, col_user = col_user, col_item = col_item, col_rating = col_rating)
     elseif model.weighting == :bm25
-        @info "Calculate BM25."
+        @debug "Calculate BM25."
         table =
             bm25(table, col_user = col_user, col_item = col_item, col_rating = col_rating)
     end
 
-    @info "Prepare sparse rating hisotry."
+    @debug "Prepare sparse rating hisotry."
     uidx2rated_itmes, iidx2rated_users, uidx2rating, iidx2rating = get_rating_history(
         table,
         col_user = col_user,
@@ -89,7 +89,7 @@ function fit!(model::ItemkNN, table; kwargs...)
         col_rating = col_rating,
     )
 
-    @info "Cache user history."
+    @debug "Cache user history."
     model.user_histories = Dict{Int,SparseVector}()
     n_items = length(keys(model.iidx2item))
     for uidx in keys(uidx2rated_itmes)
@@ -98,7 +98,7 @@ function fit!(model::ItemkNN, table; kwargs...)
             sparsevec(rated_items, ones(length(rated_items)), n_items)
     end
 
-    @info "Calculate similarity."
+    @debug "Calculate similarity."
     model.similarity = compute_similarity(
         uidx2rated_itmes,
         iidx2rated_users,
