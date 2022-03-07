@@ -30,9 +30,9 @@ mutable struct ItemkNN <: AbstractRecommender
     similar_items::Vector{Int}
     similarity_scores::Vector{Float64}
     user_histories::Dict{Int,Vector{Int}}
-    user2uidx::Dict{Int,Int}
-    item2iidx::Dict{Int,Int}
-    iidx2item::Dict{Int,Int}
+    user2uidx::Dict{Union{Int,AbstractString},Int}
+    item2iidx::Dict{Union{Int,AbstractString},Int}
+    iidx2item::Dict{Int,Union{Int,AbstractString}}
 
     ItemkNN(
         k::Int64,
