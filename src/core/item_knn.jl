@@ -157,36 +157,6 @@ function compute_similarity(
 end
 
 function predict_u2i(
-    similarity::SparseMatrixCSC,
-    user_history::Vector,
-    n::Int64;
-    drop_history::Bool = false,
-)
-    user_history = sparse(user_history)
-    return predict_u2i(similarity, user_history, n; drop_history = drop_history)
-end
-
-
-function predict_u2i(
-    similarity::SparseMatrixCSC,
-    user_history::SparseVector,
-    n::Int64;
-    drop_history::Bool = false,
-)
-    pred_iidx, pred_score = findnz(similarity * user_history)
-    permsocre = sortperm(pred_score, rev = true)
-    pred = pred_iidx[permsocre]
-
-    viewed_item, _ = findnz(user_history)
-    # this is very slow
-    if drop_history
-        pred = filter(p -> !(p in viewed_item), pred)
-    end
-    n = min(n, length(pred))
-    return pred[1:n]
-end
-
-function predict_u2i(
     similar_items::Vector{Int},
     similarity_scores::Vector{Float64},
     user_rated_itmes::Vector{Int},
