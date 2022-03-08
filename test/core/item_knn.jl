@@ -119,12 +119,11 @@ end
 @testset "Predict user to item" begin
     similar_items = [2, 1]
     similarity = [4 / (5 + 1e-6), 4 / (5 + 1e-6)]
-    user_history = [1]
-    @test predict_u2i(similar_items, similarity, user_history, 1, 1) == [2]
-    @test predict_u2i(similar_items, similarity, user_history, 1, 2) == [2] # score=0 なので一個しか返らない
-    @test predict_u2i(similar_items, similarity, user_history, 1, 1, drop_history = true) ==
+    @test predict_u2i(similar_items, similarity, [1], [1.], 1, 1) == [2]
+    @test predict_u2i(similar_items, similarity, [1], [1.], 1, 2) == [2] # score=0 なので一個しか返らない
+    @test predict_u2i(similar_items, similarity, [1], [1.], 1, 1, drop_history = true) ==
           [2]
-    @test predict_u2i(similar_items, similarity, user_history, 1, 2, drop_history = true) ==
+    @test predict_u2i(similar_items, similarity, [1], [1.], 1, 2, drop_history = true) ==
           [2]
 end
 

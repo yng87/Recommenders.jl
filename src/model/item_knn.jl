@@ -29,7 +29,8 @@ mutable struct ItemkNN <: AbstractRecommender
 
     similar_items::Vector{Int}
     similarity_scores::Vector{Float64}
-    user_histories::Dict{Int,Vector{Int}}
+    uidx2rateditem::Dict{Int,Vector{Int}}
+    uidx2rating::Dict{Int,Vector{Float64}}
     user2uidx::Dict{Union{Int,AbstractString},Int}
     item2iidx::Dict{Union{Int,AbstractString},Int}
     iidx2item::Dict{Int,Union{Int,AbstractString}}
@@ -50,6 +51,7 @@ mutable struct ItemkNN <: AbstractRecommender
         include_self,
         Int[],
         Float64[],
+        Dict(),
         Dict(),
         Dict(),
         Dict(),
@@ -92,11 +94,12 @@ function fit!(model::ItemkNN, table; kwargs...)
     )
 
     @debug "Cache user history."
-    model.user_histories = Dict{Int,SparseVector}()
-    n_items = length(keys(model.iidx2item))
+    model.uidx2rateditem = Dict{Int,SparseVector}()
     for uidx in keys(uidx2rated_itmes)
         rated_items = uidx2rated_itmes[uidx]
-        model.user_histories[uidx] = rated_items
+        rating = uidx2rating[uidx]
+        model.uidx2rateditem[uidx] = rated_items
+        model.uidx2rating[uidx] = rating
     end
 
     @debug "Calculate similarity."
@@ -137,7 +140,8 @@ function predict_u2i(
         pred = predict_u2i(
             model.similar_items,
             model.similarity_scores,
-            model.user_histories[uidx],
+            model.uidx2rateditem[uidx],
+            model.uidx2rating[uidx],
             model.k,
             n,
             drop_history = drop_history,

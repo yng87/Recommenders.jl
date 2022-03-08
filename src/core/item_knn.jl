@@ -159,13 +159,14 @@ end
 function predict_u2i(
     similar_items::Vector{Int},
     similarity_scores::Vector{Float64},
-    user_rated_itmes::Vector{Int},
+    uidx2rateditem::Vector{Int},
+    uidx2rating::Vector{Float64},
     topk::Int,
     n::Int64;
     drop_history::Bool = false,
 )
     d = Dict()
-    for j in user_rated_itmes
+    for (j, r) in zip(uidx2rateditem, uidx2rating)
         similar_to_j = (1+(j-1)*topk):j*topk
         for (iidx, score) in
             zip(similar_items[similar_to_j], similarity_scores[similar_to_j])
@@ -173,9 +174,9 @@ function predict_u2i(
                 continue
             end
             if haskey(d, iidx)
-                d[iidx] += score
+                d[iidx] += score * r
             else
-                d[iidx] = score
+                d[iidx] = score * r
             end
         end
     end
