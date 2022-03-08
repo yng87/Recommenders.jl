@@ -80,6 +80,7 @@ function fit!(
     callbacks = Any[],
     col_user = :userid,
     col_item = :item_id,
+    col_weight = nothing,
     n_epochs = 2,
     n_negatives = 1,
     learning_rate = 0.01,
@@ -124,6 +125,12 @@ function fit!(
             uidx = row[col_user]
             iidx = row[col_item]
 
+            if !(col_weight === nothing)
+                weight = row[col_weight]
+            else
+                weight = 1.0
+            end
+
             # sample negative
             for _ = 1:n_negatives
                 jidx = rand(unique_items)
@@ -132,11 +139,12 @@ function fit!(
                 end
 
                 pred = predict(model, uidx, iidx, jidx)
-                train_loss = (model.loss(pred) + train_loss * n_sample) / (n_sample + 1)
+                train_loss =
+                    (model.loss(pred) * weight + train_loss * n_sample) / (n_sample + 1)
                 n_sample += 1
 
                 grad_value = grad(model.loss, pred)
-                sgd!(model, uidx, iidx, jidx, grad_value, learning_rate)
+                sgd!(model, uidx, iidx, jidx, grad_value * weight, learning_rate)
 
                 next!(p)
             end
