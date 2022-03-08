@@ -1,5 +1,5 @@
 get_degree(offsets, i::Int) = offsets[i+1] - offsets[i]
-get_degree(offsets, is::Vector{Int}) = [get_degree(offsets, i) for i in is]
+get_degree(offsets, is::AbstractVector{Int}) = [get_degree(offsets, i) for i in is]
 
 function get_max_degree(offsets)
     allnode = collect(1:(length(offsets)-1))
@@ -9,7 +9,7 @@ end
 
 function get_neighbor(adjacency_list, offsets, nodeid)
     degree = get_degree(offsets, nodeid)
-    adjacency_list[offsets[nodeid]:offsets[nodeid]+degree-1]
+    @view adjacency_list[offsets[nodeid]:offsets[nodeid]+degree-1]
 end
 
 function onewalk(adjacency_list, offsets, query_nodeid)

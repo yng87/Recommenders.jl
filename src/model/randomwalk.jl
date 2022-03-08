@@ -7,16 +7,16 @@ Recommendation model using random walk with restart on user-item bipartite graph
 C.  Eksombatchai (2018), [Pixie: A System for Recommending 3+ Billion Items to 200+ Million Users in Real-Time](http://dl.acm.org/citation.cfm?doid=3178876.3186183)
 """
 mutable struct Randomwalk <: AbstractRecommender
-    adjacency_list::Union{Vector{Int},Nothing}
-    offsets::Union{Vector{Int},Nothing}
+    adjacency_list::Vector{Int}
+    offsets::Vector{Int}
 
-    user_history::Any
-    user2uidx::Union{Dict,Nothing}
-    item2iidx::Union{Dict,Nothing}
-    iidx2item::Union{Dict,Nothing}
-    max_degree::Union{Int,Nothing}
+    user_history::Dict{Int,Vector{Int}}
+    user2uidx::Dict{Union{Int,AbstractString},Int}
+    item2iidx::Dict{Union{Int,AbstractString},Int}
+    iidx2item::Dict{Int,Union{Int,AbstractString}}
+    max_degree::Int
 
-    Randomwalk() = new(nothing, nothing, nothing, nothing, nothing, nothing, nothing)
+    Randomwalk() = new(Int[], Int[], Dict(), Dict(), Dict(), Dict(), 0)
 end
 
 """

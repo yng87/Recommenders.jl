@@ -16,29 +16,29 @@ mutable struct BPR <: AbstractRecommender
     loss::LossFunction
     reg_coeff::Float64
 
-    user_embedding::Union{Nothing,Matrix{Float64}}
-    item_embedding::Union{Nothing,Matrix{Float64}}
+    user_embedding::Matrix{Float64}
+    item_embedding::Matrix{Float64}
 
-    user2uidx::Union{Dict,Nothing}
-    item2iidx::Union{Dict,Nothing}
-    iidx2item::Union{Dict,Nothing}
-    user_history::Union{Dict,Nothing}
+    user2uidx::Dict{Union{Int,AbstractString},Int}
+    item2iidx::Dict{Union{Int,AbstractString},Int}
+    iidx2item::Dict{Int,Union{Int,AbstractString}}
+    uidx2ratediidx::Dict{Int,Vector{Int}}
 
     BPR(dim::Int64, reg_coeff::Float64) = new(
         dim,
         BPRLoss(), # default
         reg_coeff,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
+        Matrix{Float64}(undef, 0, 0),
+        Matrix{Float64}(undef, 0, 0),
+        Dict(),
+        Dict(),
+        Dict(),
+        Dict(),
     )
 end
 
 function predict(model::BPR, uidx, iidx)::Float64
-    return model.user_embedding[:, uidx]' * model.item_embedding[:, iidx]
+    return view(model.user_embedding, :, uidx)' * view(model.item_embedding, :, iidx)
 end
 
 function predict(model::BPR, uidx, iidx, jidx)::Float64
@@ -80,20 +80,21 @@ function fit!(
     callbacks = Any[],
     col_user = :userid,
     col_item = :item_id,
+    col_weight = nothing,
     n_epochs = 2,
     n_negatives = 1,
     learning_rate = 0.01,
     verbose = -1,
     kwargs...,
 )
-    model.user_history = Dict()
-    for (userid, history) in
-        zip(make_u2i_dataset(table, col_user = col_user, col_item = col_item)...)
-        model.user_history[userid] = history
-    end
-
     table, model.user2uidx, model.item2iidx, model.iidx2item =
         make_idmap(table, col_user = col_user, col_item = col_item)
+
+    model.uidx2ratediidx = Dict()
+    for (uidx, history) in
+        zip(make_u2i_dataset(table, col_user = col_user, col_item = col_item)...)
+        model.uidx2ratediidx[uidx] = history
+    end
 
     n_user = length(keys(model.user2uidx))
 
@@ -111,26 +112,41 @@ function fit!(
         end
     end
 
+    n_sample = nothing
     for epoch = 1:n_epochs
+        if epoch == 1
+            p = ProgressUnknown("Epoch $(epoch): training...")
+        else
+            p = Progress(n_sample, 1, "Epoch $(epoch): training...")
+        end
         train_loss = 0
         n_sample = 0
         for row in Tables.rows(table)
             uidx = row[col_user]
             iidx = row[col_item]
 
+            if !(col_weight === nothing)
+                weight = row[col_weight]
+            else
+                weight = 1.0
+            end
+
             # sample negative
             for _ = 1:n_negatives
                 jidx = rand(unique_items)
-                while jidx in model.user_history[uidx]
+                while jidx in model.uidx2ratediidx[uidx]
                     jidx = rand(unique_items)
                 end
 
                 pred = predict(model, uidx, iidx, jidx)
-                train_loss = (model.loss(pred) + train_loss * n_sample) / (n_sample + 1)
+                train_loss =
+                    (model.loss(pred) * weight + train_loss * n_sample) / (n_sample + 1)
                 n_sample += 1
 
                 grad_value = grad(model.loss, pred)
-                sgd!(model, uidx, iidx, jidx, grad_value, learning_rate)
+                sgd!(model, uidx, iidx, jidx, grad_value, learning_rate * weight)
+
+                next!(p)
             end
         end
 
@@ -164,10 +180,10 @@ function predict_u2i(
     unique_iidx = collect(keys(model.iidx2item))
     preds = [predict(model, uidx, iidx) for iidx in unique_iidx]
     pred_iidx = unique_iidx[sortperm(preds, rev = true)]
-    pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
     if drop_history
-        filter!(e -> !(e in model.user_history[userid]), pred_items)
+        filter!(e -> !(e in model.uidx2ratediidx[uidx]), pred_iidx)
     end
+    pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
     n = min(n, length(pred_items))
     return pred_items[1:n]
 end

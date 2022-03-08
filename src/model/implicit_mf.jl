@@ -25,38 +25,38 @@ mutable struct ImplicitMF <: AbstractRecommender
     use_bias::Bool
     reg_coeff::Float64
 
-    μ::Union{Nothing,Float64}
-    user_bias::Union{Nothing,Vector{Float64}}
-    item_bias::Union{Nothing,Vector{Float64}}
-    user_embedding::Union{Nothing,Matrix{Float64}}
-    item_embedding::Union{Nothing,Matrix{Float64}}
+    μ::Float64
+    user_bias::Vector{Float64}
+    item_bias::Vector{Float64}
+    user_embedding::Matrix{Float64}
+    item_embedding::Matrix{Float64}
 
-    user2uidx::Union{Dict,Nothing}
-    item2iidx::Union{Dict,Nothing}
-    iidx2item::Union{Dict,Nothing}
-    user_history::Union{Dict,Nothing}
+    user2uidx::Dict{Union{Int,AbstractString},Int}
+    item2iidx::Dict{Union{Int,AbstractString},Int}
+    iidx2item::Dict{Int,Union{Int,AbstractString}}
+    uidx2ratediidx::Dict{Int,Vector{Int}}
 
     ImplicitMF(dim::Int64, use_bias::Bool, reg_coeff::Float64) = new(
         dim,
         Logloss(), # default
         use_bias,
         reg_coeff,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
+        0.0,
+        Float64[],
+        Float64[],
+        Matrix{Float64}(undef, 0, 0),
+        Matrix{Float64}(undef, 0, 0),
+        Dict(),
+        Dict(),
+        Dict(),
+        Dict(),
     )
 end
 
 
 
 function predict(model::ImplicitMF, uidx, iidx)::Float64
-    pred = model.user_embedding[:, uidx]' * model.item_embedding[:, iidx]
+    pred = view(model.user_embedding, :, uidx)' * view(model.item_embedding, :, iidx)
     if model.use_bias
         pred += model.μ + model.user_bias[uidx] + model.item_bias[iidx]
     end
@@ -97,20 +97,21 @@ function fit!(
     callbacks = Any[],
     col_user = :userid,
     col_item = :item_id,
+    col_weight = nothing,
     n_epochs = 2,
     learning_rate = 0.01,
     n_negatives = 1,
     verbose = -1,
     kwargs...,
 )
-    model.user_history = Dict()
-    for (userid, history) in
-        zip(make_u2i_dataset(table, col_user = col_user, col_item = col_item)...)
-        model.user_history[userid] = history
-    end
-
     table, model.user2uidx, model.item2iidx, model.iidx2item =
         make_idmap(table, col_user = col_user, col_item = col_item)
+
+    model.uidx2ratediidx = Dict()
+    for (uidx, history) in
+        zip(make_u2i_dataset(table, col_user = col_user, col_item = col_item)...)
+        model.uidx2ratediidx[uidx] = history
+    end
 
     n_user = length(keys(model.user2uidx))
 
@@ -134,7 +135,13 @@ function fit!(
         end
     end
 
+    n_sample = nothing
     for epoch = 1:n_epochs
+        if epoch == 1
+            p = ProgressUnknown("Epoch $(epoch): training...")
+        else
+            p = Progress(n_sample, 1, "Epoch $(epoch): training...")
+        end
         train_loss = 0
         n_sample = 0
         for row in Tables.rows(table)
@@ -143,23 +150,36 @@ function fit!(
             # update positive
             iidx = row[col_item]
 
+            if !(col_weight === nothing)
+                weight = row[col_weight]
+            else
+                weight = 1.0
+            end
+
             pred = predict(model, uidx, iidx)
-            train_loss = (model.loss(pred, 1) + train_loss * n_sample) / (n_sample + 1)
+            train_loss =
+                (model.loss(pred, 1) * weight + train_loss * n_sample) / (n_sample + 1)
             n_sample += 1
 
             grad_value = grad(model.loss, pred, 1)
-            sgd!(model, uidx, iidx, grad_value, learning_rate)
+            sgd!(model, uidx, iidx, grad_value, learning_rate * weight)
+            next!(p)
 
             # negative samples
             for _ = 1:n_negatives
                 iidx = rand(unique_items)
+                while iidx in model.uidx2ratediidx[uidx]
+                    iidx = rand(unique_items)
+                end
 
                 pred = predict(model, uidx, iidx)
-                train_loss = (model.loss(pred, 0) + train_loss * n_sample) / (n_sample + 1)
+                train_loss =
+                    (model.loss(pred, 0) * weight + train_loss * n_sample) / (n_sample + 1)
                 n_sample += 1
 
                 grad_value = grad(model.loss, pred, 0)
-                sgd!(model, uidx, iidx, grad_value, learning_rate)
+                sgd!(model, uidx, iidx, grad_value, learning_rate * weight)
+                next!(p)
             end
         end
 
@@ -193,10 +213,10 @@ function predict_u2i(
     unique_iidx = collect(keys(model.iidx2item))
     preds = [predict(model, uidx, iidx) for iidx in unique_iidx]
     pred_iidx = unique_iidx[sortperm(preds, rev = true)]
-    pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
     if drop_history
-        filter!(e -> !(e in model.user_history[userid]), pred_items)
+        filter!(e -> !(e in model.uidx2ratediidx[uidx]), pred_iidx)
     end
+    pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
     n = min(n, length(pred_items))
     return pred_items[1:n]
 end
