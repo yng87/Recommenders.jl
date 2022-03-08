@@ -162,7 +162,7 @@ function fit!(
             n_sample += 1
 
             grad_value = grad(model.loss, pred, 1)
-            sgd!(model, uidx, iidx, grad_value * weight, learning_rate)
+            sgd!(model, uidx, iidx, grad_value, learning_rate * weight)
             next!(p)
 
             # negative samples
@@ -178,7 +178,7 @@ function fit!(
                 n_sample += 1
 
                 grad_value = grad(model.loss, pred, 0)
-                sgd!(model, uidx, iidx, grad_value * weight, learning_rate)
+                sgd!(model, uidx, iidx, grad_value, learning_rate * weight)
                 next!(p)
             end
         end

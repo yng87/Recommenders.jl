@@ -144,7 +144,7 @@ function fit!(
                 n_sample += 1
 
                 grad_value = grad(model.loss, pred)
-                sgd!(model, uidx, iidx, jidx, grad_value * weight, learning_rate)
+                sgd!(model, uidx, iidx, jidx, grad_value, learning_rate * weight)
 
                 next!(p)
             end
