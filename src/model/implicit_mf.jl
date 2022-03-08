@@ -34,7 +34,7 @@ mutable struct ImplicitMF <: AbstractRecommender
     user2uidx::Dict{Union{Int,AbstractString},Int}
     item2iidx::Dict{Union{Int,AbstractString},Int}
     iidx2item::Dict{Int,Union{Int,AbstractString}}
-    user_history::Dict{Union{Int,AbstractString},Vector{<:Union{Int,AbstractString}}}
+    uidx2ratediidx::Dict{Int,Vector{Int}}
 
     ImplicitMF(dim::Int64, use_bias::Bool, reg_coeff::Float64) = new(
         dim,
@@ -104,14 +104,14 @@ function fit!(
     verbose = -1,
     kwargs...,
 )
-    model.user_history = Dict()
-    for (userid, history) in
-        zip(make_u2i_dataset(table, col_user = col_user, col_item = col_item)...)
-        model.user_history[userid] = history
-    end
-
     table, model.user2uidx, model.item2iidx, model.iidx2item =
         make_idmap(table, col_user = col_user, col_item = col_item)
+
+    model.uidx2ratediidx = Dict()
+    for (uidx, history) in
+        zip(make_u2i_dataset(table, col_user = col_user, col_item = col_item)...)
+        model.uidx2ratediidx[uidx] = history
+    end
 
     n_user = length(keys(model.user2uidx))
 
@@ -168,6 +168,9 @@ function fit!(
             # negative samples
             for _ = 1:n_negatives
                 iidx = rand(unique_items)
+                while iidx in model.uidx2ratediidx[uidx]
+                    iidx = rand(unique_items)
+                end
 
                 pred = predict(model, uidx, iidx)
                 train_loss =
@@ -210,10 +213,10 @@ function predict_u2i(
     unique_iidx = collect(keys(model.iidx2item))
     preds = [predict(model, uidx, iidx) for iidx in unique_iidx]
     pred_iidx = unique_iidx[sortperm(preds, rev = true)]
-    pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
     if drop_history
-        filter!(e -> !(e in model.user_history[userid]), pred_items)
+        filter!(e -> !(e in model.uidx2ratediidx[uidx]), pred_iidx)
     end
+    pred_items = [model.iidx2item[iidx] for iidx in pred_iidx]
     n = min(n, length(pred_items))
     return pred_items[1:n]
 end
