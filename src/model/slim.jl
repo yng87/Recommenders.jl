@@ -21,15 +21,15 @@ mutable struct SLIM <: AbstractRecommender
     λminratio::Float64
     k::Int
 
-    W::Union{SparseMatrixCSC{Float64,Int},Nothing}
+    W::SparseMatrixCSC{Float64,Int}
 
-    user2uidx::Union{Dict,Nothing}
-    item2iidx::Union{Dict,Nothing}
-    iidx2item::Union{Dict,Nothing}
-    R::Union{SparseMatrixCSC{Float64,Int},Nothing}
+    user2uidx::Dict{Union{Int,AbstractString},Int}
+    item2iidx::Dict{Union{Int,AbstractString},Int}
+    iidx2item::Dict{Int,Union{Int,AbstractString}}
+    R::SparseMatrixCSC{Float64,Int}
 
     SLIM(l1_ratio::Float64 = 0.5, λminratio::Float64 = 1e-4, k::Int = -1) =
-        new(l1_ratio, λminratio, k, nothing, nothing, nothing, nothing, nothing)
+        new(l1_ratio, λminratio, k, spzeros(0,0), Dict(), Dict(), Dict(), spzeros(0,0))
 end
 
 function truncate_at_k!(w::SparseVector, k::Int)
@@ -78,6 +78,7 @@ function fit!(
     # for multithreading
     tmp_ws = Vector{SparseVector{Float64,Int}}(undef, n_item)
 
+    p = Progress(n_item, 1, "Fitting SLIM...")
     Threads.@threads for i = 1:n_item
         mask = spzeros(n_item, n_item)
         mask[i, i] = 1
@@ -97,6 +98,7 @@ function fit!(
         truncate_at_k!(wi, model.k)
         dropzeros!(wi)
         tmp_ws[i] = wi
+        next!(p)
     end
 
     for i = 1:n_item

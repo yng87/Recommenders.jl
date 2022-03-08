@@ -25,31 +25,31 @@ mutable struct ImplicitMF <: AbstractRecommender
     use_bias::Bool
     reg_coeff::Float64
 
-    μ::Union{Nothing,Float64}
-    user_bias::Union{Nothing,Vector{Float64}}
-    item_bias::Union{Nothing,Vector{Float64}}
-    user_embedding::Union{Nothing,Matrix{Float64}}
-    item_embedding::Union{Nothing,Matrix{Float64}}
+    μ::Float64
+    user_bias::Vector{Float64}
+    item_bias::Vector{Float64}
+    user_embedding::Matrix{Float64}
+    item_embedding::Matrix{Float64}
 
-    user2uidx::Union{Dict,Nothing}
-    item2iidx::Union{Dict,Nothing}
-    iidx2item::Union{Dict,Nothing}
-    user_history::Union{Dict,Nothing}
+    user2uidx::Dict{Union{Int,AbstractString},Int}
+    item2iidx::Dict{Union{Int,AbstractString},Int}
+    iidx2item::Dict{Int,Union{Int,AbstractString}}
+    user_history::Dict{Union{Int,AbstractString},Vector{<:Union{Int,AbstractString}}}
 
     ImplicitMF(dim::Int64, use_bias::Bool, reg_coeff::Float64) = new(
         dim,
         Logloss(), # default
         use_bias,
         reg_coeff,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
+        0.0,
+        Float64[],
+        Float64[],
+        Matrix{Float64}(undef, 0, 0),
+        Matrix{Float64}(undef, 0, 0),
+        Dict(),
+        Dict(),
+        Dict(),
+        Dict(),
     )
 end
 

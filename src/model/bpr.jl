@@ -16,29 +16,29 @@ mutable struct BPR <: AbstractRecommender
     loss::LossFunction
     reg_coeff::Float64
 
-    user_embedding::Union{Nothing,Matrix{Float64}}
-    item_embedding::Union{Nothing,Matrix{Float64}}
+    user_embedding::Matrix{Float64}
+    item_embedding::Matrix{Float64}
 
-    user2uidx::Union{Dict,Nothing}
-    item2iidx::Union{Dict,Nothing}
-    iidx2item::Union{Dict,Nothing}
-    user_history::Union{Dict,Nothing}
+    user2uidx::Dict{Union{Int,AbstractString},Int}
+    item2iidx::Dict{Union{Int,AbstractString},Int}
+    iidx2item::Dict{Int,Union{Int,AbstractString}}
+    user_history::Dict{Union{Int,AbstractString},Vector{<:Union{Int,AbstractString}}}
 
     BPR(dim::Int64, reg_coeff::Float64) = new(
         dim,
         BPRLoss(), # default
         reg_coeff,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
-        nothing,
+        Matrix{Float64}(undef, 0, 0),
+        Matrix{Float64}(undef, 0, 0),
+        Dict(),
+        Dict(),
+        Dict(),
+        Dict(),
     )
 end
 
 function predict(model::BPR, uidx, iidx)::Float64
-    return model.user_embedding[:, uidx]' * model.item_embedding[:, iidx]
+    return view(model.user_embedding, :, uidx)' * view(model.item_embedding, :, iidx)
 end
 
 function predict(model::BPR, uidx, iidx, jidx)::Float64
@@ -111,7 +111,13 @@ function fit!(
         end
     end
 
+    n_sample = nothing
     for epoch = 1:n_epochs
+        if epoch == 1
+            p = ProgressUnknown("Epoch $(epoch): training...")
+        else
+            p = Progress(n_sample, 1, "Epoch $(epoch): training...")
+        end
         train_loss = 0
         n_sample = 0
         for row in Tables.rows(table)
@@ -131,6 +137,8 @@ function fit!(
 
                 grad_value = grad(model.loss, pred)
                 sgd!(model, uidx, iidx, jidx, grad_value, learning_rate)
+
+                next!(p)
             end
         end
 
